@@ -6,13 +6,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.db.connection import ensure_data_dir, init_sample_database
 
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理（数据库初始化将在 Phase 1 的 SQLite 任务中接入）。"""
+    """应用生命周期管理：启动时初始化数据目录与示例数据库。"""
+    ensure_data_dir()
+    init_sample_database()
     print("Application started.")
     yield
     print("Application shutting down.")

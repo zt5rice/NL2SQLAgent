@@ -33,3 +33,7 @@ htmlcov/
 *.sqlite
 scratch/
 tmp/
+
+# Local-only files (do NOT push)
+/AGENTS.md
+/linear_setup.png

@@ -28,6 +28,9 @@ htmlcov/
 .vscode/
 .DS_Store
 
+# Node
+node_modules/
+
 # Local databases / scratch
 *.db
 *.sqlite

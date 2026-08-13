@@ -1,0 +1,24 @@
+# FastAPI framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Configuration management
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+
+# LangChain
+langchain>=0.1.0
+langchain-community>=0.0.20
+
+# Alibaba Cloud Bailian SDK
+dashscope>=1.14.0
+
+# Database
+sqlalchemy>=2.0.0
+
+# SSE support
+sse-starlette>=1.6.0
+
+# Development tools (for tests)
+httpx>=0.25.0

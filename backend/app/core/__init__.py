@@ -1,1 +1,1 @@
-"""核心业务逻辑包（LLM、记忆、Agent）。"""
+"""Core business logic package (LLM, memory, Agent)."""

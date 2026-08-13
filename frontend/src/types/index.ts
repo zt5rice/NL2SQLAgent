@@ -1,4 +1,4 @@
-// 会话类型 - 匹配后端 snake_case
+// Session type - matches backend snake_case
 export interface Session {
   id: string
   title: string
@@ -7,7 +7,7 @@ export interface Session {
   message_count: number
 }
 
-// 消息类型 - 匹配后端
+// Message type - matches backend
 export interface Message {
   id: number | string
   session_id?: string

@@ -1,24 +1,24 @@
-# FastAPI 框架
+# FastAPI framework
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
 
-# 配置管理
+# Configuration management
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
 python-dotenv>=1.0.0
 
-# LangChain 相关
+# LangChain
 langchain>=0.1.0
 langchain-community>=0.0.20
 
-# 阿里云百炼 SDK
+# Alibaba Cloud Bailian SDK
 dashscope>=1.14.0
 
-# 数据库
+# Database
 sqlalchemy>=2.0.0
 
-# SSE 支持
+# SSE support
 sse-starlette>=1.6.0
 
-# 开发工具（测试用）
+# Development tools (for tests)
 httpx>=0.25.0

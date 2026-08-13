@@ -1,4 +1,4 @@
-"""FastAPI 应用入口。"""
+"""FastAPI application entry point."""
 
 from contextlib import asynccontextmanager
 
@@ -13,7 +13,7 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理：启动时初始化数据目录与示例数据库。"""
+    """Application lifecycle: initialize the data directory and sample database on startup."""
     ensure_data_dir()
     init_sample_database()
     print("Application started.")
@@ -21,15 +21,15 @@ async def lifespan(app: FastAPI):
     print("Application shutting down.")
 
 
-# 创建 FastAPI 应用
+# Create the FastAPI application
 app = FastAPI(
     title=settings.app_name,
-    description="智能数据分析助理 - 基于 LangChain + Qwen3 的自然语言数据库查询系统",
+    description="Intelligent data analysis assistant - natural language database query system based on LangChain + Qwen3",
     version="0.1.0",
     lifespan=lifespan,
 )
 
-# 配置 CORS 中间件
+# Configure CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -41,5 +41,5 @@ app.add_middleware(
 
 @app.get("/health")
 async def health_check():
-    """健康检查接口。"""
+    """Health check endpoint."""
     return {"status": "ok", "message": "Service is running"}

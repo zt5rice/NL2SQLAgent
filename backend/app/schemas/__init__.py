@@ -1,1 +1,1 @@
-"""Pydantic 数据模型包。"""
+"""Pydantic data models package."""

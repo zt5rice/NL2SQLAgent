@@ -1,4 +1,4 @@
-"""数据库初始化冒烟测试。"""
+"""Database initialization smoke tests."""
 
 import sqlite3
 
@@ -9,7 +9,7 @@ from app.main import app
 
 
 def test_sample_database_initialized_on_startup():
-    """应用启动后 app.db 包含业务表与元数据表。"""
+    """app.db contains business and metadata tables after startup."""
     with TestClient(app) as client:
         assert client.get("/health").status_code == 200
         conn = sqlite3.connect(get_db_path())
@@ -21,7 +21,7 @@ def test_sample_database_initialized_on_startup():
 
 
 def test_seed_data_present():
-    """sales/employees 表包含种子数据。"""
+    """sales/employees tables contain seed data."""
     init_sample_database()
     conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
@@ -33,7 +33,7 @@ def test_seed_data_present():
 
 
 def test_init_is_idempotent():
-    """重复初始化不会重复写入种子数据。"""
+    """Repeated initialization does not duplicate seed data."""
     init_sample_database()
     init_sample_database()
     conn = sqlite3.connect(get_db_path())

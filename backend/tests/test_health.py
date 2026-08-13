@@ -1,4 +1,4 @@
-"""健康检查与 CORS 冒烟测试。"""
+"""Health check and CORS smoke tests."""
 
 from fastapi.testclient import TestClient
 
@@ -6,7 +6,7 @@ from app.main import app
 
 
 def test_health_returns_ok():
-    """GET /health 返回 200 与 status=ok。"""
+    """GET /health returns 200 with status=ok."""
     with TestClient(app) as client:
         response = client.get("/health")
     assert response.status_code == 200
@@ -14,7 +14,7 @@ def test_health_returns_ok():
 
 
 def test_cors_headers_present_for_allowed_origin():
-    """允许的 CORS 来源应收到 access-control-allow-origin 头。"""
+    """Allowed CORS origin receives the access-control-allow-origin header."""
     with TestClient(app) as client:
         response = client.options(
             "/health",

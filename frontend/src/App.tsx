@@ -5,11 +5,11 @@ import ChartPanel from './components/ChartPanel'
 function App() {
   return (
     <div className="h-screen flex bg-slate-900 text-white overflow-hidden">
-      {/* 左侧 - 会话管理 */}
+      {/* Left - session management */}
       <ChatSidebar />
-      {/* 中间 - 问答区域 */}
+      {/* Center - Q&A area */}
       <ChatArea />
-      {/* 右侧 - 可视化图表 */}
+      {/* Right - visualization charts */}
       <ChartPanel />
     </div>
   )

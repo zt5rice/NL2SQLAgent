@@ -1,1 +1,1 @@
-"""NL2SQLAgent 后端应用包。"""
+"""NL2SQLAgent backend application package."""

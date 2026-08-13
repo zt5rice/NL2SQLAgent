@@ -16,3 +16,25 @@ export interface Message {
   sql_query?: string
   created_at?: string
 }
+
+// Chart types
+export type ChartType = 'bar' | 'line' | 'pie' | 'table'
+
+// Chart configuration
+export interface ChartConfig {
+  type: ChartType
+  title: string
+  data: Array<{ name: string; value: number | string }>
+  xField?: string
+  yField?: string
+}
+
+// Table data
+export interface TableData {
+  columns: string[]
+  rows: Array<{ name: string; value: number | string }>
+  raw?: Array<Array<string | number>>
+}
+
+// Right panel view mode
+export type ViewMode = 'chart' | 'table'

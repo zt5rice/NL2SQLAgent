@@ -58,6 +58,18 @@ def test_normalize_markdown_no_leading_blank_line():
     assert agent.normalize_markdown("## 1. Plan\nBody").startswith("## ")
 
 
+def test_normalize_markdown_glued_numbered_section_gets_newline():
+    """Numbered bold sections glued to prose are moved to their own line."""
+    normalized = agent.normalize_markdown("LIMIT 3;1. **Plan** — restate the question.")
+    assert "LIMIT 3;\n1. **Plan**" in normalized
+
+
+def test_normalize_markdown_keeps_existing_numbered_sections():
+    """Numbered sections already at line start stay untouched."""
+    text = "## 5. Results\n\n1. **Plan** — restate the question."
+    assert agent.normalize_markdown(text) == text
+
+
 def test_execute_query_returns_structured_rows():
     """Valid read-only SQL yields columns/rows/raw with a bounded limit."""
     result = agent.execute_query(

@@ -24,6 +24,8 @@ RESULT_LIMIT = 10
 
 # Heading markers and code fences that must start on their own line.
 _MARKDOWN_BLOCK_START_RE = re.compile(r"(?<!^)(?<![\n`#])(#{1,6}\s|```)")
+# Numbered bold section markers, e.g. "1. **Plan** - ...".
+_NUMBERED_SECTION_RE = re.compile(r"(?<!^)(?<![\n`])(\d{1,2}\. \*\*)")
 
 # Defense-in-depth: the agent prompt already forbids writes; this rejects them
 # at execution time too (leading keywords, allowing comments/whitespace before).
@@ -44,7 +46,8 @@ def normalize_markdown(text: str) -> str:
     ``"...execute it.## 1. Plan"``), which CommonMark renders as plain text.
     This inserts the missing newline while leaving valid markdown untouched.
     """
-    return _MARKDOWN_BLOCK_START_RE.sub(r"\n\1", text)
+    text = _MARKDOWN_BLOCK_START_RE.sub(r"\n\1", text)
+    return _NUMBERED_SECTION_RE.sub(r"\n\1", text)
 
 
 def assert_read_only(sql: str) -> None:

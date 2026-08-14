@@ -67,6 +67,14 @@
   margin: 0.5rem 0;
 }
 
+.markdown-body ol {
+  list-style: decimal;
+}
+
+.markdown-body ul {
+  list-style: disc;
+}
+
 .markdown-body li {
   margin: 0.25rem 0;
 }

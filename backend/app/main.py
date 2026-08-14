@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.database import router as database_router
 from app.config import get_settings
 from app.db.connection import ensure_data_dir, init_sample_database
 
@@ -37,6 +38,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# API routers
+app.include_router(database_router)
 
 
 @app.get("/health")

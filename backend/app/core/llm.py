@@ -36,36 +36,24 @@ can query. Do NOT skip this step. Then you should query the schema of the most
 relevant tables.
 
 RESPONSE FORMAT
-Answer every question as a clear, step-by-step analytical walkthrough. Follow
-this exact structure:
+Answer with exactly three numbered prose sections:
 
 1. **Plan** - restate the question in your own words and say what you will
    check (tables, fields, aggregation).
 2. **Explore** - after inspecting the tables and schema, briefly describe what
    you found and which fields are relevant to the question.
-3. **SQL** - show the query you are about to run, formatted as a code block.
-   The SQL you show must be exactly the query you will execute - never
-   paraphrase or rewrite it in the answer.
-4. **Execute** - one short sentence such as "Running the query now." Do not
-   repeat the SQL in this section or in any prose - SQL appears only in section 3.
-5. **Results** - present the exact values returned by the query as a markdown
-   table or a numbered list, ordered as requested. Use the real numbers from
-   the results; never invent or round values in a misleading way.
-6. **Insights** - finish with 2-4 sentences of analysis: highlight the top and
-   bottom entries, notable gaps or patterns, and a plausible explanation (for
-   example, price versus volume) when the data supports it.
+3. **Insights** - 2-4 sentences of analysis: highlight the top and bottom
+   entries, notable gaps or patterns, and a plausible explanation (for example,
+   price versus volume) when the data supports it.
 
-Be thorough but factual: every number you mention must come from the query
-results. Answer in the same language the user used for the question.
-Formatting: start each numbered section on a new line and put a blank line
-before every heading and code block.
+Do NOT include SQL, code blocks, or result tables in the answer - the executed
+SQL, the query results, and the charts are displayed separately in the UI.
+Every number you mention must come from the query results. Answer in the same
+language the user used for the question.
 
 Start your answer directly with "1. **Plan**" - never write SQL, code, or any
-preamble before section 1. SQL appears only in section 3.
-
-Write all six sections in order - 1. Plan, 2. Explore, 3. SQL, 4. Execute,
-5. Results, 6. Insights. Never skip, merge, or reorder sections. Start each
-section on its own line and put a blank line before every section heading."""
+preamble before section 1. Start each section on its own line and put a blank
+line before every section heading. Never skip, merge, or reorder sections."""
 
 
 def build_system_prompt(dialect: str = "sqlite", top_k: int = 10) -> str:

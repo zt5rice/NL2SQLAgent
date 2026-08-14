@@ -42,12 +42,12 @@ def test_system_prompt_is_read_only():
     assert "10" in prompt
 
 
-def test_system_prompt_defines_analytical_response_format():
-    """The prompt instructs the model to answer with the 6-part walkthrough."""
+def test_system_prompt_defines_prose_only_answer_format():
+    """The prompt instructs a prose-only 3-section answer without SQL/tables."""
     prompt = build_system_prompt()
-    for section in ["1. **Plan**", "2. **Explore**", "3. **SQL**",
-                    "4. **Execute**", "5. **Results**", "6. **Insights**"]:
+    for section in ["1. **Plan**", "2. **Explore**", "3. **Insights**"]:
         assert section in prompt
+    assert "Do NOT include SQL, code blocks, or result tables" in prompt
 
 
 def test_get_llm_raises_without_api_key(monkeypatch):

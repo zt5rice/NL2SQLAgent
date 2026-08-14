@@ -195,3 +195,25 @@ def remove_sql_in_prose(text: str) -> str:
 
         cleaned.append(_SQL_STATEMENT_IN_PROSE_RE.sub(_replace, part))
     return "```".join(cleaned)
+
+
+def strip_sql_and_tables(text: str) -> str:
+    """Remove fenced code blocks and pipe tables from an answer.
+
+    SQL, query results, and charts are displayed separately in the UI, so the
+    answer should stay prose-only. This is a safety net for models that still
+    include them despite the prompt.
+    """
+    text = re.sub(r"```[\s\S]*?```", "", text)
+    lines = text.split("\n")
+    out: list[str] = []
+    index = 0
+    while index < len(lines):
+        if lines[index].lstrip().startswith("|"):
+            while index < len(lines) and lines[index].lstrip().startswith("|"):
+                index += 1
+            out.append("")
+            continue
+        out.append(lines[index])
+        index += 1
+    return "\n".join(out)

@@ -4,7 +4,13 @@ import sqlite3
 
 from fastapi.testclient import TestClient
 
-from app.db.connection import get_db_path, init_sample_database
+from app.db.connection import (
+    EXPECTED_EMPLOYEE_ROWS,
+    EXPECTED_SALES_ROWS,
+    build_sales_seed,
+    get_db_path,
+    init_sample_database,
+)
 from app.main import app
 
 
@@ -26,9 +32,9 @@ def test_seed_data_present():
     conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM sales")
-    assert cursor.fetchone()[0] == 15
+    assert cursor.fetchone()[0] == EXPECTED_SALES_ROWS
     cursor.execute("SELECT COUNT(*) FROM employees")
-    assert cursor.fetchone()[0] == 8
+    assert cursor.fetchone()[0] == EXPECTED_EMPLOYEE_ROWS
     conn.close()
 
 
@@ -39,7 +45,18 @@ def test_init_is_idempotent():
     conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM sales")
-    assert cursor.fetchone()[0] == 15
+    assert cursor.fetchone()[0] == EXPECTED_SALES_ROWS
     cursor.execute("SELECT COUNT(*) FROM employees")
-    assert cursor.fetchone()[0] == 8
+    assert cursor.fetchone()[0] == EXPECTED_EMPLOYEE_ROWS
     conn.close()
+
+
+def test_sales_seed_is_deterministic_and_rich():
+    """The generated seed is stable and covers the full product/month grid."""
+    first = build_sales_seed()
+    assert first == build_sales_seed()
+    assert len(first) == EXPECTED_SALES_ROWS
+    months = {row[4] for row in first}
+    assert len(months) == 24
+    regions = {row[5] for row in first}
+    assert regions == {"East", "West", "North", "South"}

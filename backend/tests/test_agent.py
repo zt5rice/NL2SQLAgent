@@ -36,12 +36,15 @@ def test_parse_literal_result_uses_safe_eval():
 def test_execute_query_returns_structured_rows():
     """Valid read-only SQL yields columns/rows/raw with a bounded limit."""
     result = agent.execute_query(
-        "SELECT product_name, quantity FROM sales ORDER BY quantity DESC"
+        "SELECT product_name, SUM(quantity) AS total FROM sales "
+        "GROUP BY product_name ORDER BY total DESC"
     )
-    assert result["columns"] == ["product_name", "quantity"]
+    assert result["columns"] == ["product_name", "total"]
     assert len(result["rows"]) == agent.RESULT_LIMIT
-    assert result["rows"][0][0] == "Ballpoint Pen"
-    assert "Ballpoint Pen" in result["raw"]
+    totals = [row[1] for row in result["rows"]]
+    assert totals == sorted(totals, reverse=True)
+    assert isinstance(result["rows"][0][0], str)
+    assert result["raw"].startswith("[['")
 
 
 def test_execute_query_rejects_writes():

@@ -14,8 +14,8 @@ Build a complete intelligent data analysis system: a backend of FastAPI + LangCh
 - Restructure the existing root-level Python scaffold into separate frontend/backend directories: `backend/` (FastAPI app + `requirements.txt` + `.env.example`) and `frontend/` (Vite app); remove the root-level `pyproject.toml` and `src/` placeholder package.
 
 **Backend (FastAPI + LangChain)**
-- Config module: `.env` manages `DASHSCOPE_API_KEY`, the model name (default `qwen3-max`), and CORS origins; the data directory is auto-initialized on startup.
-- LLM module: provider-pluggable (default: OpenCode Go OpenAI-compatible endpoint via `ChatOpenAI` with `qwen3.7-max`; `ChatTongyi` kept as a legacy fallback); non-streaming calls to obtain complete `tool_calls`, producing SSE events across agent iterations.
+- Config module: `.env` manages `LLM_API_KEY`, the model name (default `deepseek-v4-flash`), and CORS origins; the data directory is auto-initialized on startup.
+- LLM module: provider-pluggable (default: OpenCode Go OpenAI-compatible endpoint via `ChatOpenAI` with `deepseek-v4-flash`; `ChatTongyi` kept as a legacy fallback); non-streaming calls to obtain complete `tool_calls`, producing SSE events across agent iterations.
 - Agent module: reuse the `SQLDatabaseToolkit` (list_tables / schema / query_checker / query) agentic loop; the system prompt explicitly forbids write statements (INSERT/UPDATE/DELETE/DROP); query results are limited to top 10 by default; tool result parsing uses `ast.literal_eval` to avoid the security risks of `eval`.
 - Memory module: loads the last 10 rounds (20 messages) of history per session from the messages table, converts them to LangChain message format, with an in-memory cache.
 - Session storage: a single SQLite file `backend/data/app.db` containing both business tables (`sales`, `employees` with Chinese sample data) and metadata tables (`chat_sessions`, `chat_messages`).
@@ -43,5 +43,5 @@ Build a complete intelligent data analysis system: a backend of FastAPI + LangCh
 
 - Feature scope stays at the current baseline with no additional features (no writes, no file uploads, no multi-user).
 - Local development only: `uvicorn app.main:app --reload --port 8000` + `npm run dev` (5173); no Docker.
-- Business data and session metadata share `app.db`; memory window of 10 rounds, result limit of 10, model `qwen3-max` — all configurable.
+- Business data and session metadata share `app.db`; memory window of 10 rounds, result limit of 10, model `deepseek-v4-flash` — all configurable.
 - Chinese UI, API prefix `/api`, CORS restricted to localhost:5173.

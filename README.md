@@ -31,7 +31,7 @@ frontend in real time.
 | Layer | Technology |
 | --- | --- |
 | Backend | FastAPI, LangChain, SQLite (SQLAlchemy), sse-starlette |
-| LLM | Qwen3 (`qwen3.7-max`) via OpenCode Go / OpenAI-compatible API |
+| LLM | DeepSeek (`deepseek-v4-flash`, cost-efficient) via OpenCode Go / OpenAI-compatible API |
 | Frontend | React 18, Vite, TypeScript, Tailwind CSS, Zustand, ECharts |
 | Tests | pytest (backend), Vitest + Testing Library (frontend) |
 
@@ -59,7 +59,7 @@ Edit `backend/.env` and set your LLM credentials:
 LLM_PROVIDER=openai_compatible
 LLM_API_KEY=your_api_key
 LLM_BASE_URL=https://opencode.ai/zen/go/v1
-LLM_MODEL=qwen3.7-max
+LLM_MODEL=deepseek-v4-flash
 ```
 
 Start the API server:
@@ -119,8 +119,9 @@ The LLM layer is provider-agnostic. `app/core/llm.py` reads:
 - `LLM_API_KEY` - your provider key (also accepts `OPENCODE_CODEX_API_KEY`
   and the legacy `DASHSCOPE_API_KEY` as fallbacks)
 - `LLM_BASE_URL` - OpenAI-compatible base URL
-- `LLM_MODEL` - model name (OpenCode Go exposes `qwen3.7-max`, `qwen3.8-max`,
-  etc.)
+- `LLM_MODEL` - model name (defaults to the cost-efficient
+  `deepseek-v4-flash`; OpenCode Go also exposes `qwen3.7-max`, `qwen3.8-max`,
+  `deepseek-v4-pro`, etc.)
 
 Switching providers is a `.env` change only - no application code changes.
 

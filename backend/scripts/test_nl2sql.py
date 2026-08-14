@@ -24,7 +24,7 @@ from app.core.llm import build_system_prompt, get_llm
 API_KEY = os.environ.get("LLM_API_KEY", "") or os.environ.get(
     "OPENCODE_CODEX_API_KEY", ""
 )
-MODEL = os.environ.get("LLM_MODEL", "qwen3.7-max")
+MODEL = os.environ.get("LLM_MODEL", "deepseek-v4-flash")
 DB_URL = os.environ.get("DATABASE_URL", "sqlite:///./data/app.db")
 
 

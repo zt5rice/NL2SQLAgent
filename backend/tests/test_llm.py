@@ -24,7 +24,7 @@ def _fake_settings(**overrides):
         "llm_provider": "openai_compatible",
         "llm_api_key": "",
         "llm_base_url": "https://opencode.ai/zen/go/v1",
-        "llm_model": "qwen3.7-max",
+        "llm_model": "deepseek-v4-flash",
         "dashscope_api_key": "",
         "qwen_model": "qwen3-max",
     }
@@ -54,7 +54,7 @@ def test_get_llm_falls_back_to_env_key(monkeypatch):
     monkeypatch.setenv("OPENCODE_CODEX_API_KEY", "sk-opencode-test")
     monkeypatch.setattr(llm_module, "get_settings", lambda: _fake_settings(llm_api_key=""))
     llm = get_llm(streaming=False)
-    assert llm.model_name == "qwen3.7-max"
+    assert llm.model_name == "deepseek-v4-flash"
     assert llm.openai_api_base == "https://opencode.ai/zen/go/v1"
     assert llm.openai_api_key.get_secret_value() == "sk-opencode-test"
 
@@ -67,13 +67,13 @@ def test_get_llm_returns_chatopenai_for_default_provider(monkeypatch):
         lambda: _fake_settings(
             llm_api_key="sk-test",
             llm_base_url="https://example.com/v1",
-            llm_model="qwen3.7-max",
+            llm_model="deepseek-v4-flash",
         ),
     )
     llm = get_llm(streaming=False)
     assert type(llm).__name__ == "ChatOpenAI"
     assert llm.openai_api_base == "https://example.com/v1"
-    assert llm.model_name == "qwen3.7-max"
+    assert llm.model_name == "deepseek-v4-flash"
 
 
 def test_get_llm_tongyi_provider_uses_legacy_class(monkeypatch):

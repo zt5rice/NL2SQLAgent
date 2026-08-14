@@ -14,8 +14,8 @@
 - 将现有根级 Python 脚手架调整为前后端目录布局：`backend/`（FastAPI 应用 + `requirements.txt` + `.env.example`）与 `frontend/`（Vite 应用），移除根级 `pyproject.toml` 与 `src/` 占位包。
 
 **后端（FastAPI + LangChain）**
-- 配置模块：`.env` 管理 `DASHSCOPE_API_KEY`、模型名（默认 `qwen3-max`）、CORS 来源；启动时自动初始化数据目录。
-- LLM 模块：供应商可插拔（默认 OpenCode Go 的 OpenAI 兼容端点，经 `ChatOpenAI` 接入 `qwen3.7-max`；`ChatTongyi` 作为旧方案保留），非流式调用获取完整 `tool_calls`，按 Agent 迭代产出 SSE 事件。
+- 配置模块：`.env` 管理 `LLM_API_KEY`、模型名（默认 `deepseek-v4-flash`）、CORS 来源；启动时自动初始化数据目录。
+- LLM 模块：供应商可插拔（默认 OpenCode Go 的 OpenAI 兼容端点，经 `ChatOpenAI` 接入 `deepseek-v4-flash`；`ChatTongyi` 作为旧方案保留），非流式调用获取完整 `tool_calls`，按 Agent 迭代产出 SSE 事件。
 - Agent 模块：复用 `SQLDatabaseToolkit`（list_tables / schema / query_checker / query）的 agentic 循环，系统提示词明确禁止 INSERT/UPDATE/DELETE/DROP 等写操作，查询结果默认限制 top 10；工具执行结果解析使用 `ast.literal_eval`，避免 `eval` 的安全隐患。
 - 记忆模块：按会话 ID 从消息表加载最近 10 轮（20 条消息）历史，转换为 LangChain 消息格式，带内存缓存。
 - 会话存储：单 SQLite 文件 `backend/data/app.db`，同时包含业务表（`sales`、`employees` 中文示例数据）与元数据表（`chat_sessions`、`chat_messages`）。
@@ -43,5 +43,5 @@
 
 - 功能范围以当前基线为准，不额外增加新功能（无写操作、无文件上传、无多用户）。
 - 本地开发运行：`uvicorn app.main:app --reload --port 8000` + `npm run dev`（5173），不做 Docker。
-- 业务数据与会话元数据共用 `app.db`；内存窗口 10 轮、结果上限 10 条、模型 `qwen3-max`，均可通过配置调整。
+- 业务数据与会话元数据共用 `app.db`；内存窗口 10 轮、结果上限 10 条、模型 `deepseek-v4-flash`，均可通过配置调整。
 - 界面为中文，API 前缀 `/api`，CORS 仅允许 localhost:5173。

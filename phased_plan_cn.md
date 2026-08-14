@@ -195,7 +195,7 @@ httpx>=0.25.0
   - `done` — 完成标记
 - LLM 配置：
   - 供应商：默认 `openai_compatible`（OpenCode Go 订阅，OpenAI 兼容端点），经 `ChatOpenAI`（langchain-openai）接入；`tongyi`（ChatTongyi / langchain-community）作为旧方案保留
-  - 模型：`qwen3.7-max`（OpenCode Go 端点实测可用；qwen3-max 不在其模型清单，用同系列更强型号替代）
+  - 模型：默认 `deepseek-v4-flash`（OpenCode Go 端点实测可用，工具调用链路正常且成本更低；`qwen3.7-max` 亦实测可用，需要更强推理时可切换）
   - 鉴权：`LLM_API_KEY` 写入 `backend/.env`（兼容 `OPENCODE_CODEX_API_KEY` / `DASHSCOPE_API_KEY`），缺失时调用报错
   - 端点：`LLM_BASE_URL=https://opencode.ai/zen/go/v1`
   - 参数：`temperature=0.7`；Agent 工具调用使用非流式调用获取完整 `tool_calls`

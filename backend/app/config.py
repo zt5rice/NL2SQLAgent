@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     llm_provider: str = "openai_compatible"
     llm_api_key: str = ""
     llm_base_url: str = "https://opencode.ai/zen/go/v1"
-    llm_model: str = "qwen3.7-max"
+    llm_model: str = "deepseek-v4-flash"
 
     # Legacy Alibaba Cloud Bailian settings (kept for ChatTongyi compatibility).
     dashscope_api_key: str = ""

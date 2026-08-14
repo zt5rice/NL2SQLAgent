@@ -195,7 +195,7 @@ httpx>=0.25.0
   - `done` — completion marker
 - LLM configuration:
   - Provider: default `openai_compatible` (OpenCode Go subscription, OpenAI-compatible endpoint) via `ChatOpenAI` (langchain-openai); `tongyi` (`ChatTongyi` / langchain-community) kept as a legacy fallback
-  - Model: `qwen3.7-max` (verified on the OpenCode Go endpoint; `qwen3-max` is not in its model list, so this stronger sibling model is used instead)
+  - Model: default `deepseek-v4-flash` (verified on the OpenCode Go endpoint with the full tool-call loop, cost-efficient; `qwen3.7-max` also verified and available for stronger reasoning)
   - Auth: `LLM_API_KEY` written to `backend/.env` (also accepts `OPENCODE_CODEX_API_KEY` / `DASHSCOPE_API_KEY`); errors if missing
   - Endpoint: `LLM_BASE_URL=https://opencode.ai/zen/go/v1`
   - Parameters: `temperature=0.7`; agent tool calls use non-streaming invocations to get complete `tool_calls`

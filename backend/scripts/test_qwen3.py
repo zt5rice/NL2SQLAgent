@@ -29,7 +29,7 @@ from app.core.llm import get_llm
 API_KEY = os.environ.get("LLM_API_KEY", "") or os.environ.get(
     "OPENCODE_CODEX_API_KEY", ""
 )
-MODEL = os.environ.get("LLM_MODEL", "qwen3.7-max")
+MODEL = os.environ.get("LLM_MODEL", "deepseek-v4-flash")
 BASE_URL = os.environ.get("LLM_BASE_URL", "https://opencode.ai/zen/go/v1")
 
 

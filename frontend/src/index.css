@@ -3,6 +3,35 @@
 @tailwind utilities;
 
 /* Markdown rendering inside assistant messages */
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 1rem 0 0.5rem;
+  color: #e2e8f0;
+}
+
+.markdown-body h1 {
+  font-size: 1.25rem;
+}
+
+.markdown-body h2 {
+  font-size: 1.1rem;
+  color: #67e8f9;
+  border-bottom: 1px solid rgba(103, 232, 249, 0.25);
+  padding-bottom: 0.25rem;
+}
+
+.markdown-body h3 {
+  font-size: 1rem;
+}
+
+.markdown-body h4 {
+  font-size: 0.9rem;
+}
+
 .markdown-body p {
   margin: 0 0 0.5rem;
 }
@@ -44,4 +73,36 @@
 
 .markdown-body strong {
   color: #fff;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  font-size: 0.85em;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid #334155;
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+}
+
+.markdown-body th {
+  background: rgba(51, 65, 85, 0.5);
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.markdown-body blockquote {
+  border-left: 3px solid #475569;
+  padding-left: 0.75rem;
+  color: #94a3b8;
+  margin: 0.5rem 0;
+}
+
+.markdown-body hr {
+  border-color: #334155;
+  margin: 0.75rem 0;
 }

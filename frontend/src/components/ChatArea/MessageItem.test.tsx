@@ -18,6 +18,22 @@ describe('MessageItem', () => {
     expect(screen.getByText('code')).toBeTruthy()
   })
 
+  it('renders markdown headings as real heading elements', () => {
+    const { container } = render(
+      <MessageItem
+        message={{
+          id: '5',
+          role: 'assistant',
+          content: '## 1. Plan\n\nThe question asks about revenue.',
+        }}
+      />,
+    )
+    const heading = container.querySelector('h2')
+    expect(heading).toBeTruthy()
+    expect(heading?.textContent).toBe('1. Plan')
+    expect(screen.getByText('The question asks about revenue.')).toBeTruthy()
+  })
+
   it('renders error messages with an error style', () => {
     const { container } = render(
       <MessageItem

@@ -43,7 +43,7 @@ def test_normalize_markdown_glued_heading_gets_newline():
     """A heading glued to the previous sentence is moved to its own line."""
     text = "The query is valid. Let me execute it.## 1. Plan\nThe question asks..."
     normalized = agent.normalize_markdown(text)
-    assert "it.\n## 1. Plan" in normalized
+    assert "it.\n\n## 1. Plan" in normalized
     assert "it.## 1. Plan" not in normalized
 
 
@@ -67,7 +67,7 @@ def test_normalize_markdown_no_leading_blank_line():
 def test_normalize_markdown_glued_numbered_section_gets_newline():
     """Numbered bold sections glued to prose are moved to their own line."""
     normalized = agent.normalize_markdown("LIMIT 3;1. **Plan** — restate the question.")
-    assert "LIMIT 3;\n1. **Plan**" in normalized
+    assert "LIMIT 3;\n\n1. **Plan**" in normalized
 
 
 def test_normalize_markdown_keeps_existing_numbered_sections():
@@ -102,7 +102,7 @@ def test_replace_sql_block_ignores_non_sql_or_missing():
 def test_normalize_markdown_closing_fence_glue():
     """A closing fence glued to a section marker gets a newline."""
     normalized = agent.normalize_markdown("```1. **Plan** — restate.")
-    assert "```\n1. **Plan**" in normalized
+    assert "```\n\n1. **Plan**" in normalized
 
 
 def test_normalize_markdown_adds_blank_line_before_table():
@@ -119,6 +119,20 @@ def test_normalize_markdown_keeps_table_rows_together():
     assert agent.normalize_markdown(text) == text
 
 
+def test_normalize_markdown_splits_glued_bold_sections():
+    """**4. Execute****5. Results** gets separated by a blank line."""
+    text = "**4. Execute****5. Results**"
+    normalized = agent.normalize_markdown(text)
+    assert "**4. Execute**\n\n**5. Results**" in normalized
+
+
+def test_normalize_markdown_adds_blank_line_before_sections():
+    """Sections without a preceding blank line get separated."""
+    text = "4. **Execute** — Running now.\n5. **Results** — Revenue:"
+    normalized = agent.normalize_markdown(text)
+    assert "Running now.\n\n5. **Results**" in normalized
+
+
 def test_markdown_stream_normalizer_fixes_glue_across_events():
     """A glued section marker spanning stream events is normalized."""
     normalizer = MarkdownStreamNormalizer()
@@ -126,7 +140,7 @@ def test_markdown_stream_normalizer_fixes_glue_across_events():
     chunks += normalizer.push(";1. **Plan** — restate the question.")
     tail = normalizer.finish()
     joined = "".join(chunks + [tail])
-    assert "DESC;\n1. **Plan**" in joined
+    assert "DESC;\n\n1. **Plan**" in joined
     assert "DESC;1. **Plan" not in joined
 
 

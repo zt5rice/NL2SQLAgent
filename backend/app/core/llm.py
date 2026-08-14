@@ -61,7 +61,11 @@ Formatting: start each numbered section on a new line and put a blank line
 before every heading and code block.
 
 Start your answer directly with "1. **Plan**" - never write SQL, code, or any
-preamble before section 1. SQL appears only in section 3."""
+preamble before section 1. SQL appears only in section 3.
+
+Write all six sections in order - 1. Plan, 2. Explore, 3. SQL, 4. Execute,
+5. Results, 6. Insights. Never skip, merge, or reorder sections. Start each
+section on its own line and put a blank line before every section heading."""
 
 
 def build_system_prompt(dialect: str = "sqlite", top_k: int = 10) -> str:

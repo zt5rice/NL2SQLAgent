@@ -75,7 +75,7 @@ def test_legacy_glued_headings_are_normalized_on_startup():
             (session_id,),
         ).fetchone()[0]
         conn.close()
-        assert "Run it.\n## 1. Plan" in content
+        assert "Run it.\n\n## 1. Plan" in content
 
         # Idempotent: a second run changes nothing.
         init_sample_database()

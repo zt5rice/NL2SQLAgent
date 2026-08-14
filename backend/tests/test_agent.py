@@ -4,7 +4,7 @@ import pytest
 
 from app.core import agent
 from app.core.database import get_sql_database
-from app.core.markdown import replace_sql_block
+from app.core.markdown import MarkdownStreamNormalizer, replace_sql_block
 
 
 def test_assert_read_only_rejects_writes():
@@ -92,6 +92,31 @@ def test_replace_sql_block_ignores_non_sql_or_missing():
     answer = "Some text without a code block."
     assert replace_sql_block(answer, "SELECT 1") == answer
     assert replace_sql_block("```sql\nSELECT 1\n```", None) == "```sql\nSELECT 1\n```"
+
+
+def test_normalize_markdown_closing_fence_glue():
+    """A closing fence glued to a section marker gets a newline."""
+    normalized = agent.normalize_markdown("```1. **Plan** — restate.")
+    assert "```\n1. **Plan**" in normalized
+
+
+def test_markdown_stream_normalizer_fixes_glue_across_events():
+    """A glued section marker spanning stream events is normalized."""
+    normalizer = MarkdownStreamNormalizer()
+    chunks = normalizer.push("SELECT ... ORDER BY total_quantity DESC")
+    chunks += normalizer.push(";1. **Plan** — restate the question.")
+    tail = normalizer.finish()
+    joined = "".join(chunks + [tail])
+    assert "DESC;\n1. **Plan**" in joined
+    assert "DESC;1. **Plan" not in joined
+
+
+def test_markdown_stream_normalizer_emits_complete_lines():
+    """Only complete lines are emitted; the tail comes from finish()."""
+    normalizer = MarkdownStreamNormalizer()
+    assert normalizer.push("line one\n") == ["line one\n"]
+    assert normalizer.push("line two") == []
+    assert normalizer.finish() == "line two"
 
 
 def test_execute_query_returns_structured_rows():

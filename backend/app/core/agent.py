@@ -18,7 +18,7 @@ from langchain_core.messages import BaseMessage, HumanMessage
 
 from app.core.database import get_engine, get_sql_database
 from app.core.llm import build_system_prompt, get_llm
-from app.core.markdown import normalize_markdown
+from app.core.markdown import MarkdownStreamNormalizer, normalize_markdown
 
 SQL_QUERY_TOOL = "sql_db_query"
 RESULT_LIMIT = 10
@@ -91,13 +91,14 @@ def run_sql_agent(
 
     last_sql: str | None = None
     text_parts: list[str] = []
+    normalizer = MarkdownStreamNormalizer()
 
     for kind, item in stream.interleave("messages", "tool_calls"):
         if kind == "messages":
             text = item.text if isinstance(item.text, str) else "".join(item.text)
-            for token in normalize_markdown(text):
-                text_parts.append(token)
-                yield {"type": "text_delta", "content": token}
+            for chunk in normalizer.push(text):
+                text_parts.append(chunk)
+                yield {"type": "text_delta", "content": chunk}
         elif kind == "tool_calls":
             if item.tool_name == SQL_QUERY_TOOL and isinstance(item.input, dict):
                 last_sql = item.input.get("query")
@@ -107,6 +108,11 @@ def run_sql_agent(
                 "input": item.input,
                 "output": item.output,
             }
+
+    tail = normalizer.finish()
+    if tail:
+        text_parts.append(tail)
+        yield {"type": "text_delta", "content": tail}
 
     data = (
         execute_query(last_sql)

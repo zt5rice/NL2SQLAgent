@@ -55,10 +55,13 @@ async def chat(payload: ChatRequest) -> EventSourceResponse:
     if not message:
         raise HTTPException(status_code=422, detail="Message must not be empty")
 
-    # Persist the user turn, invalidate the memory cache, then rebuild history.
-    session_store.add_message(payload.session_id, "user", message)
+    # Rebuild prior history first (cache-fresh), then persist the new user turn.
+    # run_sql_agent appends the current question itself, so history must not
+    # include it - otherwise the model would see the question twice.
     memory.invalidate(payload.session_id)
     history = memory.get_history_messages(payload.session_id)
+    session_store.add_message(payload.session_id, "user", message)
+    memory.invalidate(payload.session_id)
 
     return EventSourceResponse(
         _chat_events(payload.session_id, message, history),

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useAppStore } from '../../store/useAppStore'
 import type { Message } from '../../types'
 import MessageItem from './MessageItem'
 
@@ -8,6 +9,7 @@ interface MessageListProps {
 
 export default function MessageList({ messages }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const isStreaming = useAppStore((s) => s.isStreaming)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -26,8 +28,12 @@ export default function MessageList({ messages }: MessageListProps) {
         </div>
       ) : (
         <>
-          {messages.map((message) => (
-            <MessageItem key={message.id} message={message} />
+          {messages.map((message, index) => (
+            <MessageItem
+              key={message.id}
+              message={message}
+              streaming={isStreaming && index === messages.length - 1}
+            />
           ))}
           <div ref={bottomRef} />
         </>

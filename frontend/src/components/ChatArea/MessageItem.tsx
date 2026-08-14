@@ -4,11 +4,13 @@ import type { Message } from '../../types'
 
 interface MessageItemProps {
   message: Message
+  streaming?: boolean
 }
 
-export default function MessageItem({ message }: MessageItemProps) {
+export default function MessageItem({ message, streaming = false }: MessageItemProps) {
   const isUser = message.role === 'user'
   const isError = message.isError
+  const showPlainText = isUser || (streaming && message.role === 'assistant')
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
@@ -21,7 +23,7 @@ export default function MessageItem({ message }: MessageItemProps) {
               : 'bg-slate-800 text-slate-200 border border-slate-700/60'
         }`}
       >
-        {isUser ? (
+        {showPlainText ? (
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
           <div className="markdown-body">

@@ -36,6 +36,7 @@ export function useChat() {
   const currentSessionId = useAppStore((s) => s.currentSessionId)
   const addMessage = useAppStore((s) => s.addMessage)
   const updateLastMessageContent = useAppStore((s) => s.updateLastMessageContent)
+  const updateLastMessageSql = useAppStore((s) => s.updateLastMessageSql)
   const setStreaming = useAppStore((s) => s.setStreaming)
   const setChartConfig = useAppStore((s) => s.setChartConfig)
   const setTableData = useAppStore((s) => s.setTableData)
@@ -71,6 +72,7 @@ export function useChat() {
             fullText += delta
             updateLastMessageContent(fullText)
           },
+          onSql: (sql) => updateLastMessageSql(sql),
           onData: (data) => setTableData(data),
           onChart: (config) => setChartConfig(config),
           onError: () => finish(),
@@ -88,6 +90,7 @@ export function useChat() {
       currentSessionId,
       addMessage,
       updateLastMessageContent,
+      updateLastMessageSql,
       setStreaming,
       setChartConfig,
       setTableData,

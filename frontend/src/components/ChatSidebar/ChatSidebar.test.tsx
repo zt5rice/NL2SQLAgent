@@ -1,7 +1,27 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { vi } from 'vitest'
 import { useAppStore } from '../../store/useAppStore'
 import ChatSidebar from './index'
+
+vi.mock('../../services/api', () => ({
+  api: {
+    session: {
+      list: vi.fn(async () => []),
+      create: vi.fn(async (title?: string) => ({
+        id: 'backend-1',
+        title: title ?? 'New Session',
+        created_at: '2026-08-14T00:00:00',
+        updated_at: '2026-08-14T00:00:00',
+      })),
+      update: vi.fn(async () => ({})),
+      delete: vi.fn(async () => undefined),
+      getMessages: vi.fn(async () => []),
+    },
+    database: {},
+    chat: {},
+  },
+}))
 
 const initialState = {
   sessions: [],
@@ -18,10 +38,12 @@ beforeEach(() => {
 })
 
 describe('ChatSidebar', () => {
-  it('creates a session with the New Session button', () => {
+  it('creates a session with the New Session button', async () => {
     render(<ChatSidebar />)
     fireEvent.click(screen.getByText('New Session'))
-    expect(useAppStore.getState().sessions).toHaveLength(1)
+    await waitFor(() => {
+      expect(useAppStore.getState().sessions).toHaveLength(1)
+    })
   })
 
   it('renames a session inline', () => {
@@ -36,11 +58,13 @@ describe('ChatSidebar', () => {
     expect(useAppStore.getState().sessions[0].title).toBe('New Title')
   })
 
-  it('deletes a session', () => {
+  it('deletes a session', async () => {
     useAppStore.getState().createSession('To Delete')
     render(<ChatSidebar />)
     fireEvent.mouseEnter(screen.getByText('To Delete'))
     fireEvent.click(screen.getByTitle('Delete'))
-    expect(useAppStore.getState().sessions).toHaveLength(0)
+    await waitFor(() => {
+      expect(useAppStore.getState().sessions).toHaveLength(0)
+    })
   })
 })

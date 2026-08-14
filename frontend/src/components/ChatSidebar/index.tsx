@@ -1,14 +1,10 @@
 import { MessageSquarePlus } from 'lucide-react'
-import { useAppStore } from '../../store/useAppStore'
+import { useSession } from '../../hooks/useSession'
 import SessionItem from './SessionItem'
 
 export default function ChatSidebar() {
-  const sessions = useAppStore((s) => s.sessions)
-  const currentSessionId = useAppStore((s) => s.currentSessionId)
-  const createSession = useAppStore((s) => s.createSession)
-  const selectSession = useAppStore((s) => s.selectSession)
-  const renameSession = useAppStore((s) => s.renameSession)
-  const deleteSession = useAppStore((s) => s.deleteSession)
+  const { sessions, currentSessionId, createSession, selectSession, renameSession, deleteSession } =
+    useSession()
 
   return (
     <aside className="w-64 h-full bg-slate-900 border-r border-slate-700/50 flex flex-col shrink-0">
@@ -19,7 +15,7 @@ export default function ChatSidebar() {
 
       <div className="p-3">
         <button
-          onClick={() => createSession()}
+          onClick={() => void createSession()}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
         >
           <MessageSquarePlus className="w-4 h-4" />

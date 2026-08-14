@@ -4,6 +4,7 @@ import pytest
 
 from app.core import agent
 from app.core.database import get_sql_database
+from app.core.markdown import replace_sql_block
 
 
 def test_assert_read_only_rejects_writes():
@@ -68,6 +69,29 @@ def test_normalize_markdown_keeps_existing_numbered_sections():
     """Numbered sections already at line start stay untouched."""
     text = "## 5. Results\n\n1. **Plan** — restate the question."
     assert agent.normalize_markdown(text) == text
+
+
+def test_replace_sql_block_uses_executed_query():
+    """The ```sql fence content is replaced with the executed query."""
+    answer = "## 3. SQL\n\n```sql\nSELECT 1 FROM wrong\n```\n\nInsights."
+    replaced = replace_sql_block(answer, "SELECT category FROM sales GROUP BY category")
+    assert "SELECT category FROM sales GROUP BY category" in replaced
+    assert "SELECT 1 FROM wrong" not in replaced
+
+
+def test_replace_sql_block_falls_back_to_sql_looking_fence():
+    """A generic fence whose content looks like SQL is replaced too."""
+    answer = "```\nSELECT * FROM sales\n```\nDone."
+    replaced = replace_sql_block(answer, "SELECT category FROM sales")
+    assert "SELECT category FROM sales" in replaced
+    assert "SELECT * FROM sales" not in replaced
+
+
+def test_replace_sql_block_ignores_non_sql_or_missing():
+    """No SQL (or no SQL-looking block) means the answer is unchanged."""
+    answer = "Some text without a code block."
+    assert replace_sql_block(answer, "SELECT 1") == answer
+    assert replace_sql_block("```sql\nSELECT 1\n```", None) == "```sql\nSELECT 1\n```"
 
 
 def test_execute_query_returns_structured_rows():

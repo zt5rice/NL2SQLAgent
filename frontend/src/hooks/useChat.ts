@@ -1,11 +1,13 @@
 import { useCallback } from 'react'
+import { api } from '../services/api'
 import { useAppStore } from '../store/useAppStore'
 import type { ChartConfig, TableData } from '../types'
 
 /**
  * Chat actions backed by the shared Zustand store.
  *
- * SSE streaming from the backend replaces the placeholder reply in ZHA-15.
+ * Sends the message through the SSE chat client; falls back to a local
+ * placeholder until the backend /api/chat endpoint is available (Phase 3).
  */
 const DEMO_CHART: ChartConfig = {
   type: 'bar',
@@ -25,34 +27,74 @@ const DEMO_TABLE: TableData = {
   rows: DEMO_CHART.data,
 }
 
+const PLACEHOLDER_REPLY =
+  'This is a **placeholder** reply. The backend chat API will be wired up in Phase 3.'
+
 export function useChat() {
   const messages = useAppStore((s) => s.messages)
   const isStreaming = useAppStore((s) => s.isStreaming)
+  const currentSessionId = useAppStore((s) => s.currentSessionId)
   const addMessage = useAppStore((s) => s.addMessage)
+  const updateLastMessageContent = useAppStore((s) => s.updateLastMessageContent)
   const setStreaming = useAppStore((s) => s.setStreaming)
   const setChartConfig = useAppStore((s) => s.setChartConfig)
   const setTableData = useAppStore((s) => s.setTableData)
   const clearChartData = useAppStore((s) => s.clearChartData)
+
+  const runFallback = useCallback(() => {
+    updateLastMessageContent(PLACEHOLDER_REPLY)
+    setChartConfig(DEMO_CHART)
+    setTableData(DEMO_TABLE)
+    setStreaming(false)
+  }, [updateLastMessageContent, setChartConfig, setTableData, setStreaming])
 
   const sendMessage = useCallback(
     (content: string) => {
       addMessage({ role: 'user', content })
       clearChartData()
       setStreaming(true)
+      addMessage({ role: 'assistant', content: '' })
 
-      // Placeholder assistant reply + demo chart until SSE streaming is wired up (ZHA-15).
-      setTimeout(() => {
-        addMessage({
-          role: 'assistant',
-          content:
-            'This is a **placeholder** reply. Streaming responses from the LLM will be wired up in a later ticket.',
-        })
-        setChartConfig(DEMO_CHART)
-        setTableData(DEMO_TABLE)
+      const sse = api.chat({ session_id: currentSessionId ?? 'local', message: content })
+      let fullText = ''
+      let finished = false
+
+      const finish = () => {
+        if (finished) return
+        finished = true
         setStreaming(false)
-      }, 300)
+      }
+
+      sse
+        .start({
+          onText: (delta) => {
+            fullText += delta
+            updateLastMessageContent(fullText)
+          },
+          onData: (data) =>
+            setTableData({ columns: data.columns, rows: data.rows, raw: data.raw }),
+          onChart: (config) => setChartConfig(config),
+          onError: () => finish(),
+          onDone: () => {
+            if (!fullText) updateLastMessageContent(PLACEHOLDER_REPLY)
+            finish()
+          },
+        })
+        .catch(() => {
+          // Backend /api/chat is not available until Phase 3; fall back to the local demo.
+          runFallback()
+        })
     },
-    [addMessage, setStreaming, setChartConfig, setTableData, clearChartData],
+    [
+      currentSessionId,
+      addMessage,
+      updateLastMessageContent,
+      setStreaming,
+      setChartConfig,
+      setTableData,
+      clearChartData,
+      runFallback,
+    ],
   )
 
   return { messages, isStreaming, sendMessage }

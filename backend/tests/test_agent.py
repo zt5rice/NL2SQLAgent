@@ -33,6 +33,31 @@ def test_parse_literal_result_uses_safe_eval():
     assert agent.parse_literal_result("[]") == []
 
 
+def test_normalize_markdown_glued_heading_gets_newline():
+    """A heading glued to the previous sentence is moved to its own line."""
+    text = "The query is valid. Let me execute it.## 1. Plan\nThe question asks..."
+    normalized = agent.normalize_markdown(text)
+    assert "it.\n## 1. Plan" in normalized
+    assert "it.## 1. Plan" not in normalized
+
+
+def test_normalize_markdown_keeps_valid_markdown_unchanged():
+    """Properly formatted headings, fences, and tables are untouched."""
+    text = "## 1. Plan\n\nBody\n\n```sql\nSELECT 1\n```\n\n## 2. Explore"
+    assert agent.normalize_markdown(text) == text
+
+
+def test_normalize_markdown_glued_code_fence_gets_newline():
+    """Code fences glued to prose are moved to their own line."""
+    normalized = agent.normalize_markdown("The query:```sql\nSELECT 1\n```")
+    assert "\n```sql" in normalized
+
+
+def test_normalize_markdown_no_leading_blank_line():
+    """A heading at the very start keeps no leading newline."""
+    assert agent.normalize_markdown("## 1. Plan\nBody").startswith("## ")
+
+
 def test_execute_query_returns_structured_rows():
     """Valid read-only SQL yields columns/rows/raw with a bounded limit."""
     result = agent.execute_query(

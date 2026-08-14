@@ -22,6 +22,9 @@ from app.core.llm import build_system_prompt, get_llm
 SQL_QUERY_TOOL = "sql_db_query"
 RESULT_LIMIT = 10
 
+# Heading markers and code fences that must start on their own line.
+_MARKDOWN_BLOCK_START_RE = re.compile(r"(?<!^)(?<![\n`#])(#{1,6}\s|```)")
+
 # Defense-in-depth: the agent prompt already forbids writes; this rejects them
 # at execution time too (leading keywords, allowing comments/whitespace before).
 WRITE_STATEMENT_RE = re.compile(
@@ -32,6 +35,16 @@ WRITE_STATEMENT_RE = re.compile(
 
 class ReadOnlyQueryError(ValueError):
     """Raised when model-generated SQL attempts a write statement."""
+
+
+def normalize_markdown(text: str) -> str:
+    """Ensure markdown block markers (headings, code fences) start on a new line.
+
+    Models occasionally glue a heading to the previous sentence (e.g.
+    ``"...execute it.## 1. Plan"``), which CommonMark renders as plain text.
+    This inserts the missing newline while leaving valid markdown untouched.
+    """
+    return _MARKDOWN_BLOCK_START_RE.sub(r"\n\1", text)
 
 
 def assert_read_only(sql: str) -> None:
@@ -93,7 +106,8 @@ def run_sql_agent(
 
     for kind, item in stream.interleave("messages", "tool_calls"):
         if kind == "messages":
-            for token in item.text:
+            text = item.text if isinstance(item.text, str) else "".join(item.text)
+            for token in normalize_markdown(text):
                 text_parts.append(token)
                 yield {"type": "text_delta", "content": token}
         elif kind == "tool_calls":

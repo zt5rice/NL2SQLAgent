@@ -2,6 +2,7 @@
 
 from fastapi.testclient import TestClient
 
+from app.db.connection import EXPECTED_EMPLOYEE_ROWS, EXPECTED_SALES_ROWS
 from app.main import app
 
 
@@ -28,7 +29,7 @@ def test_schema_endpoint_returns_structured_schema():
     assert response.status_code == 200
     payload = response.json()
     sales = next(t for t in payload["tables"] if t["name"] == "sales")
-    assert sales["row_count"] == 15
+    assert sales["row_count"] == EXPECTED_SALES_ROWS
     names = {c["name"] for c in sales["columns"]}
     assert {"product_name", "category", "quantity", "price"} <= names
     assert len(sales["sample_rows"]) > 0
@@ -42,7 +43,7 @@ def test_table_detail_endpoint():
     assert response.status_code == 200
     payload = response.json()
     assert payload["name"] == "employees"
-    assert payload["row_count"] == 8
+    assert payload["row_count"] == EXPECTED_EMPLOYEE_ROWS
 
 
 def test_table_detail_unknown_table_returns_404():

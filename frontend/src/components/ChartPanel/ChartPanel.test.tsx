@@ -70,6 +70,20 @@ describe('ChartPanel', () => {
     expect(screen.getByText('No data yet')).toBeTruthy()
   })
 
+  it('shows a generating placeholder while streaming with no data', () => {
+    useAppStore.setState({ isStreaming: true })
+    render(<ChartPanel />)
+    expect(screen.getByText('Generating results…')).toBeTruthy()
+    expect(screen.queryByText('No data yet')).toBeNull()
+  })
+
+  it('shows the idle empty state when not streaming and no data', () => {
+    useAppStore.setState({ isStreaming: false })
+    render(<ChartPanel />)
+    expect(screen.getByText('No data yet')).toBeTruthy()
+    expect(screen.queryByText('Generating results…')).toBeNull()
+  })
+
   it('shows the SQL of the last assistant message', () => {
     useAppStore.setState({
       messages: [

@@ -7,6 +7,7 @@ import DataTable from './DataTable'
 
 export default function ChartPanel() {
   const messages = useAppStore((s) => s.messages)
+  const isStreaming = useAppStore((s) => s.isStreaming)
   const chartConfig = useAppStore((s) => s.chartConfig)
   const tableData = useAppStore((s) => s.tableData)
   const viewMode = useAppStore((s) => s.viewMode)
@@ -90,8 +91,22 @@ export default function ChartPanel() {
       <div className="flex-1 p-4 min-h-0">
         {!hasData ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-500">
-            <p className="text-sm">No data yet</p>
-            <p className="text-xs mt-1 text-slate-600">Ask a question to see results here</p>
+            {isStreaming ? (
+              <>
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse mb-3" />
+                <p className="text-sm">Generating results…</p>
+                <p className="text-xs mt-1 text-slate-600">
+                  Querying the database and preparing the visualization
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm">No data yet</p>
+                <p className="text-xs mt-1 text-slate-600">
+                  Ask a question to see results here
+                </p>
+              </>
+            )}
           </div>
         ) : viewMode === 'chart' ? (
           hasChartData ? (

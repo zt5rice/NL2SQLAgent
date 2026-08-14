@@ -67,6 +67,16 @@ describe('message actions', () => {
     expect(useAppStore.getState().messages[0].sql_query).toBe('SELECT 1')
   })
 
+  it('patches the last message with an error state', () => {
+    useAppStore.getState().addMessage({ role: 'assistant', content: '' })
+    useAppStore
+      .getState()
+      .patchLastMessage({ content: '⚠️ boom', isError: true })
+    const last = useAppStore.getState().messages[0]
+    expect(last.content).toBe('⚠️ boom')
+    expect(last.isError).toBe(true)
+  })
+
   it('sets messages and sessions from the backend', () => {
     useAppStore.getState().setSessions([
       { id: 's1', title: 'A', created_at: '2026-08-14T00:00:00', updated_at: '2026-08-14T00:00:00' },

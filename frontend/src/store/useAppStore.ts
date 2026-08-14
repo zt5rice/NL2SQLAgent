@@ -30,6 +30,7 @@ interface AppState {
   addMessage: (message: Omit<Message, 'id' | 'created_at'>) => void
   updateLastMessageContent: (content: string) => void
   updateLastMessageSql: (sql: string) => void
+  patchLastMessage: (patch: Partial<Pick<Message, 'content' | 'sql_query' | 'isError'>>) => void
   setStreaming: (streaming: boolean) => void
   setMessages: (messages: Message[]) => void
   setSessions: (sessions: Session[]) => void
@@ -122,6 +123,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       const last = messages[messages.length - 1]
       if (last) {
         messages[messages.length - 1] = { ...last, sql_query: sql }
+      }
+      return { messages }
+    })
+  },
+
+  patchLastMessage: (patch) => {
+    set((state) => {
+      const messages = [...state.messages]
+      const last = messages[messages.length - 1]
+      if (last) {
+        messages[messages.length - 1] = { ...last, ...patch }
       }
       return { messages }
     })

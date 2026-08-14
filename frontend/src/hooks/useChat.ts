@@ -1,34 +1,15 @@
 import { useCallback } from 'react'
 import { api } from '../services/api'
 import { useAppStore } from '../store/useAppStore'
-import type { ChartConfig, TableData } from '../types'
 
 /**
  * Chat actions backed by the shared Zustand store.
  *
- * Sends the message through the SSE chat client; falls back to a local
- * placeholder until the backend /api/chat endpoint is available (Phase 3).
+ * Sends the message through the SSE chat client and renders the streamed
+ * answer. Failures and backend error events are surfaced as error bubbles.
  */
-const DEMO_CHART: ChartConfig = {
-  type: 'bar',
-  title: 'Monthly Sales',
-  data: [
-    { name: 'Jan', value: 1200 },
-    { name: 'Feb', value: 900 },
-    { name: 'Mar', value: 1500 },
-    { name: 'Apr', value: 1100 },
-    { name: 'May', value: 1800 },
-    { name: 'Jun', value: 1600 },
-  ],
-}
-
-const DEMO_TABLE: TableData = {
-  columns: ['Month', 'Sales'],
-  rows: DEMO_CHART.data.map((d) => [d.name, d.value]),
-}
-
-const PLACEHOLDER_REPLY =
-  'This is a **placeholder** reply. The backend chat API will be wired up in Phase 3.'
+const CONNECTION_ERROR =
+  'Connection failed. Please make sure the backend is running on http://localhost:8000 and try again.'
 
 export function useChat() {
   const messages = useAppStore((s) => s.messages)
@@ -42,13 +23,7 @@ export function useChat() {
   const setTableData = useAppStore((s) => s.setTableData)
   const setViewMode = useAppStore((s) => s.setViewMode)
   const clearChartData = useAppStore((s) => s.clearChartData)
-
-  const runFallback = useCallback(() => {
-    updateLastMessageContent(PLACEHOLDER_REPLY)
-    setChartConfig(DEMO_CHART)
-    setTableData(DEMO_TABLE)
-    setStreaming(false)
-  }, [updateLastMessageContent, setChartConfig, setTableData, setStreaming])
+  const patchLastMessage = useAppStore((s) => s.patchLastMessage)
 
   const sendMessage = useCallback(
     (content: string) => {
@@ -67,6 +42,11 @@ export function useChat() {
         setStreaming(false)
       }
 
+      const showError = (message: string) => {
+        patchLastMessage({ content: `⚠️ ${message}`, isError: true })
+        finish()
+      }
+
       sse
         .start({
           onText: (delta) => {
@@ -81,28 +61,29 @@ export function useChat() {
             // switch to the table view manually afterwards.
             setViewMode('chart')
           },
-          onError: () => finish(),
+          onError: (message) => showError(message),
           onDone: () => {
-            if (!fullText) updateLastMessageContent(PLACEHOLDER_REPLY)
+            const messages = useAppStore.getState().messages
+            const last = messages[messages.length - 1]
+            if (!fullText && !last?.isError) {
+              updateLastMessageContent('No response generated.')
+            }
             finish()
           },
         })
-        .catch(() => {
-          // Backend /api/chat is not available until Phase 3; fall back to the local demo.
-          runFallback()
-        })
+        .catch(() => showError(CONNECTION_ERROR))
     },
     [
       currentSessionId,
       addMessage,
       updateLastMessageContent,
       updateLastMessageSql,
+      patchLastMessage,
       setStreaming,
       setChartConfig,
       setTableData,
       setViewMode,
       clearChartData,
-      runFallback,
     ],
   )
 

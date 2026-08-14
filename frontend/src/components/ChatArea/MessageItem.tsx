@@ -7,6 +7,7 @@ interface MessageItemProps {
 
 export default function MessageItem({ message }: MessageItemProps) {
   const isUser = message.role === 'user'
+  const isError = message.isError
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
@@ -14,7 +15,9 @@ export default function MessageItem({ message }: MessageItemProps) {
         className={`max-w-[75%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
           isUser
             ? 'bg-blue-600 text-white'
-            : 'bg-slate-800 text-slate-200 border border-slate-700/60'
+            : isError
+              ? 'bg-red-950/60 text-red-200 border border-red-500/40'
+              : 'bg-slate-800 text-slate-200 border border-slate-700/60'
         }`}
       >
         {isUser ? (

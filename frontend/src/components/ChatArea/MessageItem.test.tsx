@@ -32,4 +32,14 @@ describe('MessageItem', () => {
     expect(screen.getByText('View SQL')).toBeTruthy()
     expect(screen.getByText('SELECT product_name FROM sales LIMIT 3')).toBeTruthy()
   })
+
+  it('renders error messages with an error style', () => {
+    const { container } = render(
+      <MessageItem
+        message={{ id: '4', role: 'assistant', content: '⚠️ boom', isError: true }}
+      />,
+    )
+    expect(screen.getByText('⚠️ boom')).toBeTruthy()
+    expect(container.querySelector('.bg-red-950\\/60')).toBeTruthy()
+  })
 })

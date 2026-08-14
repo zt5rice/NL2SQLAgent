@@ -10,7 +10,11 @@ _SQL_FENCE_RE = re.compile(r"(```sql\s*\n)(.*?)(\n```)", re.DOTALL)
 _GENERIC_FENCE_RE = re.compile(r"(```[^\n]*\n)(.*?)(\n```)", re.DOTALL)
 _SQL_KEYWORD_RE = re.compile(r"\b(SELECT|WITH|INSERT|UPDATE|DELETE)\b", re.IGNORECASE)
 _SQL_START_RE = re.compile(r"^\s*\b(SELECT|WITH)\b", re.IGNORECASE)
-_SECTION_MARKER_RE = re.compile(r"^\s*(?:\d{1,2}\.\s\*\*|#+\s*\d{1,2}\.)")
+# Section markers in any format: "1. Plan", "1. **Plan**", "**1. Plan**", "## 1.".
+_SECTION_MARKER_RE = re.compile(
+    r"^\s*(?:\d{1,2}\.\s(?:\*\*)?[A-Z]|\*\*\d{1,2}\.\s[A-Z]|#+\s*\d{1,2}\.)"
+)
+_GLUED_BOLD_SECTION_RE = re.compile(r"(?<!^)(?<![\n])(\*\*\d{1,2}\. [A-Z])")
 _SQL_CLAUSE_RE = re.compile(
     r"\b(FROM|WHERE|GROUP\s+BY|ORDER\s+BY|LIMIT|JOIN|SUM|COUNT|AVG)\b", re.IGNORECASE
 )
@@ -42,7 +46,21 @@ def normalize_markdown(text: str) -> str:
     text = _MARKDOWN_BLOCK_START_RE.sub(r"\n\1", text)
     text = _CLOSING_FENCE_GLUE_RE.sub(r"\1\n", text)
     text = _NUMBERED_SECTION_RE.sub(r"\n\1", text)
+    text = _ensure_section_breaks(text)
     return _ensure_table_blank_lines(text)
+
+
+def _ensure_section_breaks(text: str) -> str:
+    """Guarantee every numbered section starts on its own line, separated by a
+    blank line (covering ``1. Plan``, ``1. **Plan**`` and ``**1. Plan**``)."""
+    text = _GLUED_BOLD_SECTION_RE.sub(r"\n\1", text)
+    lines = text.split("\n")
+    out: list[str] = []
+    for line in lines:
+        if _SECTION_MARKER_RE.match(line) and out and out[-1].strip():
+            out.append("")
+        out.append(line)
+    return "\n".join(out)
 
 
 def _ensure_table_blank_lines(text: str) -> str:

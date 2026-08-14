@@ -67,4 +67,9 @@ describe('ChatSidebar', () => {
       expect(useAppStore.getState().sessions).toHaveLength(0)
     })
   })
+
+  it('shows the DeepSeek branding in the footer', () => {
+    render(<ChatSidebar />)
+    expect(screen.getByText('Powered by DeepSeek + LangChain')).toBeTruthy()
+  })
 })

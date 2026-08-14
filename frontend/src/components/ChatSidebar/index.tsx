@@ -44,7 +44,7 @@ export default function ChatSidebar() {
       </div>
 
       <div className="p-3 border-t border-slate-700/50">
-        <p className="text-xs text-slate-600 text-center">Powered by Qwen3 + LangChain</p>
+        <p className="text-xs text-slate-600 text-center">Powered by DeepSeek + LangChain</p>
       </div>
     </aside>
   )

@@ -106,6 +106,8 @@ def test_chat_persists_messages_with_sql():
     assert [m["role"] for m in messages] == ["user", "assistant"]
     assert messages[1]["content"] == "Top products"
     assert messages[1]["sql_query"] == "SELECT product_name, quantity FROM sales LIMIT 2"
+    assert '"columns"' in messages[1]["data_json"]
+    assert '"type"' in messages[1]["chart_json"]
 
 
 def test_chat_unknown_session_returns_404():

@@ -25,7 +25,9 @@ def _row_to_message(row: Any) -> dict:
         "role": row[2],
         "content": row[3],
         "sql_query": row[4],
-        "created_at": _parse_timestamp(row[5]),
+        "data_json": row[5],
+        "chart_json": row[6],
+        "created_at": _parse_timestamp(row[7]),
     }
 
 
@@ -111,7 +113,7 @@ def list_messages(session_id: str) -> list[dict]:
     """Messages for a session in chronological order."""
     with get_raw_connection() as conn:
         rows = conn.execute(
-            "SELECT id, session_id, role, content, sql_query, created_at "
+            "SELECT id, session_id, role, content, sql_query, data_json, chart_json, created_at "
             "FROM chat_messages WHERE session_id = ? ORDER BY id ASC",
             (session_id,),
         ).fetchall()
@@ -119,20 +121,26 @@ def list_messages(session_id: str) -> list[dict]:
 
 
 def add_message(
-    session_id: str, role: str, content: str, sql_query: str | None = None
+    session_id: str,
+    role: str,
+    content: str,
+    sql_query: str | None = None,
+    data_json: str | None = None,
+    chart_json: str | None = None,
 ) -> dict:
     """Persist a message; raises ValueError when the session does not exist."""
     if get_session(session_id) is None:
         raise ValueError(f"Session '{session_id}' does not exist")
     with get_raw_connection() as conn:
         cursor = conn.execute(
-            "INSERT INTO chat_messages (session_id, role, content, sql_query) "
-            "VALUES (?, ?, ?, ?)",
-            (session_id, role, content, sql_query),
+            "INSERT INTO chat_messages "
+            "(session_id, role, content, sql_query, data_json, chart_json) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (session_id, role, content, sql_query, data_json, chart_json),
         )
         conn.commit()
         row = conn.execute(
-            "SELECT id, session_id, role, content, sql_query, created_at "
+            "SELECT id, session_id, role, content, sql_query, data_json, chart_json, created_at "
             "FROM chat_messages WHERE id = ?",
             (cursor.lastrowid,),
         ).fetchone()

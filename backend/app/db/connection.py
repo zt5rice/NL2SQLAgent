@@ -207,11 +207,14 @@ def init_sample_database() -> None:
             role TEXT NOT NULL,
             content TEXT NOT NULL,
             sql_query TEXT,
+            data_json TEXT,
+            chart_json TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
         )
         """
     )
+    _ensure_chat_message_columns(conn)
 
     # Seed data: sales (only when the table is empty)
     cursor.execute("SELECT COUNT(*) FROM sales")
@@ -232,3 +235,13 @@ def init_sample_database() -> None:
     conn.commit()
     conn.close()
     print("Sample database initialized.")
+
+
+def _ensure_chat_message_columns(conn: sqlite3.Connection) -> None:
+    """Idempotently add chart persistence columns to existing databases."""
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(chat_messages)")}
+    if "data_json" not in columns:
+        conn.execute("ALTER TABLE chat_messages ADD COLUMN data_json TEXT")
+    if "chart_json" not in columns:
+        conn.execute("ALTER TABLE chat_messages ADD COLUMN chart_json TEXT")
+    conn.commit()

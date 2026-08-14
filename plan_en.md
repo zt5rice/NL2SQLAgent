@@ -15,7 +15,7 @@ Build a complete intelligent data analysis system: a backend of FastAPI + LangCh
 
 **Backend (FastAPI + LangChain)**
 - Config module: `.env` manages `DASHSCOPE_API_KEY`, the model name (default `qwen3-max`), and CORS origins; the data directory is auto-initialized on startup.
-- LLM module: `ChatTongyi` from `langchain-community`; non-streaming calls to obtain complete `tool_calls`, producing SSE events across agent iterations.
+- LLM module: provider-pluggable (default: OpenCode Go OpenAI-compatible endpoint via `ChatOpenAI` with `qwen3.7-max`; `ChatTongyi` kept as a legacy fallback); non-streaming calls to obtain complete `tool_calls`, producing SSE events across agent iterations.
 - Agent module: reuse the `SQLDatabaseToolkit` (list_tables / schema / query_checker / query) agentic loop; the system prompt explicitly forbids write statements (INSERT/UPDATE/DELETE/DROP); query results are limited to top 10 by default; tool result parsing uses `ast.literal_eval` to avoid the security risks of `eval`.
 - Memory module: loads the last 10 rounds (20 messages) of history per session from the messages table, converts them to LangChain message format, with an in-memory cache.
 - Session storage: a single SQLite file `backend/data/app.db` containing both business tables (`sales`, `employees` with Chinese sample data) and metadata tables (`chat_sessions`, `chat_messages`).

@@ -53,7 +53,9 @@ this exact structure:
    example, price versus volume) when the data supports it.
 
 Be thorough but factual: every number you mention must come from the query
-results. Answer in the same language the user used for the question."""
+results. Answer in the same language the user used for the question.
+Formatting: start each numbered section on a new line and put a blank line
+before every heading and code block."""
 
 
 def build_system_prompt(dialect: str = "sqlite", top_k: int = 10) -> str:

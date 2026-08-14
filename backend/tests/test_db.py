@@ -11,6 +11,7 @@ from app.db.connection import (
     get_db_path,
     init_sample_database,
 )
+from app.db.session_store import add_message, create_session, delete_session
 from app.main import app
 
 
@@ -60,3 +61,30 @@ def test_sales_seed_is_deterministic_and_rich():
     assert len(months) == 24
     regions = {row[5] for row in first}
     assert regions == {"East", "West", "North", "South"}
+
+
+def test_legacy_glued_headings_are_normalized_on_startup():
+    """Old assistant messages with glued headings are fixed by the migration."""
+    session_id = create_session("migration test")["id"]
+    try:
+        add_message(session_id, "assistant", "Run it.## 1. Plan\nBody text.")
+        init_sample_database()  # triggers the legacy normalization
+        conn = sqlite3.connect(get_db_path())
+        content = conn.execute(
+            "SELECT content FROM chat_messages WHERE session_id = ? ORDER BY id DESC",
+            (session_id,),
+        ).fetchone()[0]
+        conn.close()
+        assert "Run it.\n## 1. Plan" in content
+
+        # Idempotent: a second run changes nothing.
+        init_sample_database()
+        conn = sqlite3.connect(get_db_path())
+        content_again = conn.execute(
+            "SELECT content FROM chat_messages WHERE session_id = ? ORDER BY id DESC",
+            (session_id,),
+        ).fetchone()[0]
+        conn.close()
+        assert content_again == content
+    finally:
+        delete_session(session_id)

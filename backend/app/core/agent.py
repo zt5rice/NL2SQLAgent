@@ -18,12 +18,10 @@ from langchain_core.messages import BaseMessage, HumanMessage
 
 from app.core.database import get_engine, get_sql_database
 from app.core.llm import build_system_prompt, get_llm
+from app.core.markdown import normalize_markdown
 
 SQL_QUERY_TOOL = "sql_db_query"
 RESULT_LIMIT = 10
-
-# Heading markers and code fences that must start on their own line.
-_MARKDOWN_BLOCK_START_RE = re.compile(r"(?<!^)(?<![\n`#])(#{1,6}\s|```)")
 
 # Defense-in-depth: the agent prompt already forbids writes; this rejects them
 # at execution time too (leading keywords, allowing comments/whitespace before).
@@ -35,16 +33,6 @@ WRITE_STATEMENT_RE = re.compile(
 
 class ReadOnlyQueryError(ValueError):
     """Raised when model-generated SQL attempts a write statement."""
-
-
-def normalize_markdown(text: str) -> str:
-    """Ensure markdown block markers (headings, code fences) start on a new line.
-
-    Models occasionally glue a heading to the previous sentence (e.g.
-    ``"...execute it.## 1. Plan"``), which CommonMark renders as plain text.
-    This inserts the missing newline while leaving valid markdown untouched.
-    """
-    return _MARKDOWN_BLOCK_START_RE.sub(r"\n\1", text)
 
 
 def assert_read_only(sql: str) -> None:

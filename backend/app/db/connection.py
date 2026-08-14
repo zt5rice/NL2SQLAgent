@@ -215,6 +215,7 @@ def init_sample_database() -> None:
         """
     )
     _ensure_chat_message_columns(conn)
+    _normalize_legacy_messages(conn)
 
     # Seed data: sales (only when the table is empty)
     cursor.execute("SELECT COUNT(*) FROM sales")
@@ -245,3 +246,29 @@ def _ensure_chat_message_columns(conn: sqlite3.Connection) -> None:
     if "chart_json" not in columns:
         conn.execute("ALTER TABLE chat_messages ADD COLUMN chart_json TEXT")
     conn.commit()
+
+
+def _normalize_legacy_messages(conn: sqlite3.Connection) -> None:
+    """Idempotently re-normalize persisted assistant messages (markdown).
+
+    Messages written before the normalization fix can contain glued headings
+    (e.g. ``"...execute it.## 1. Plan"``). Only rows whose content actually
+    changes are updated, so repeated startups are no-ops.
+    """
+    from app.core.markdown import normalize_markdown
+
+    rows = conn.execute(
+        "SELECT id, content FROM chat_messages WHERE role = 'assistant'"
+    ).fetchall()
+    changed = 0
+    for message_id, content in rows:
+        normalized = normalize_markdown(content)
+        if normalized != content:
+            conn.execute(
+                "UPDATE chat_messages SET content = ? WHERE id = ?",
+                (normalized, message_id),
+            )
+            changed += 1
+    if changed:
+        conn.commit()
+        print(f"Normalized {changed} legacy message(s).")

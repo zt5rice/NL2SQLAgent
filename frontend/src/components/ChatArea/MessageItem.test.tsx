@@ -61,4 +61,21 @@ describe('MessageItem', () => {
     expect(screen.getByText('Electronics')).toBeTruthy()
     expect(screen.getByText('575,396.77')).toBeTruthy()
   })
+
+  it('renders a streaming assistant reply as plain text', () => {
+    const { container } = render(
+      <MessageItem
+        streaming
+        message={{
+          id: '7',
+          role: 'assistant',
+          content: '## 1. Plan\n\n| Category | Revenue |\n|---|---|\n| Elec',
+        }}
+      />,
+    )
+    // No heading or table elements while streaming - just literal text.
+    expect(container.querySelector('h2')).toBeNull()
+    expect(container.querySelector('table')).toBeNull()
+    expect(screen.getByText('## 1. Plan', { exact: false })).toBeTruthy()
+  })
 })

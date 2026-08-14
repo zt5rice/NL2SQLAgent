@@ -15,7 +15,7 @@
 
 **后端（FastAPI + LangChain）**
 - 配置模块：`.env` 管理 `DASHSCOPE_API_KEY`、模型名（默认 `qwen3-max`）、CORS 来源；启动时自动初始化数据目录。
-- LLM 模块：`langchain-community` 的 `ChatTongyi`，非流式调用获取完整 `tool_calls`，按 Agent 迭代产出 SSE 事件。
+- LLM 模块：供应商可插拔（默认 OpenCode Go 的 OpenAI 兼容端点，经 `ChatOpenAI` 接入 `qwen3.7-max`；`ChatTongyi` 作为旧方案保留），非流式调用获取完整 `tool_calls`，按 Agent 迭代产出 SSE 事件。
 - Agent 模块：复用 `SQLDatabaseToolkit`（list_tables / schema / query_checker / query）的 agentic 循环，系统提示词明确禁止 INSERT/UPDATE/DELETE/DROP 等写操作，查询结果默认限制 top 10；工具执行结果解析使用 `ast.literal_eval`，避免 `eval` 的安全隐患。
 - 记忆模块：按会话 ID 从消息表加载最近 10 轮（20 条消息）历史，转换为 LangChain 消息格式，带内存缓存。
 - 会话存储：单 SQLite 文件 `backend/data/app.db`，同时包含业务表（`sales`、`employees` 中文示例数据）与元数据表（`chat_sessions`、`chat_messages`）。

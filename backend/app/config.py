@@ -1,9 +1,10 @@
 """Configuration management module."""
 
 from functools import lru_cache
+from typing import Annotated
 
 from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -14,7 +15,14 @@ class Settings(BaseSettings):
     debug: bool = False
     api_prefix: str = "/api"
 
-    # Alibaba Cloud Bailian
+    # LLM provider: "openai_compatible" (default, works with OpenCode Go /
+    # OpenRouter / DeepSeek / etc.) or "tongyi" (legacy Alibaba Bailian).
+    llm_provider: str = "openai_compatible"
+    llm_api_key: str = ""
+    llm_base_url: str = "https://opencode.ai/zen/go/v1"
+    llm_model: str = "qwen3.7-max"
+
+    # Legacy Alibaba Cloud Bailian settings (kept for ChatTongyi compatibility).
     dashscope_api_key: str = ""
     qwen_model: str = "qwen3-max"
 
@@ -22,7 +30,12 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./data/app.db"
 
     # CORS (supports comma-separated environment variable values)
-    cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    # NoDecode: pydantic-settings must not JSON-decode the env value first;
+    # the validator below splits the comma-separated string instead.
+    cors_origins: Annotated[list[str], NoDecode] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

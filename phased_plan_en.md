@@ -194,15 +194,23 @@ httpx>=0.25.0
   - `error` — error message
   - `done` — completion marker
 - LLM configuration:
-  - Model: `qwen3-max` (`ChatTongyi` from langchain-community)
-  - Auth: `DASHSCOPE_API_KEY` written to `backend/.env`; errors if missing
+  - Provider: default `openai_compatible` (OpenCode Go subscription, OpenAI-compatible endpoint) via `ChatOpenAI` (langchain-openai); `tongyi` (`ChatTongyi` / langchain-community) kept as a legacy fallback
+  - Model: `qwen3.7-max` (verified on the OpenCode Go endpoint; `qwen3-max` is not in its model list, so this stronger sibling model is used instead)
+  - Auth: `LLM_API_KEY` written to `backend/.env` (also accepts `OPENCODE_CODEX_API_KEY` / `DASHSCOPE_API_KEY`); errors if missing
+  - Endpoint: `LLM_BASE_URL=https://opencode.ai/zen/go/v1`
   - Parameters: `temperature=0.7`; agent tool calls use non-streaming invocations to get complete `tool_calls`
   - System prompt: `SQL_AGENT_SYSTEM_PROMPT` enforces read-only (forbids INSERT/UPDATE/DELETE/DROP); results limited to top 10
   - Memory: sliding window of 10 rounds (20 messages), rebuilt and cached from `chat_messages`
+- Verified interface contract (2026-08-14, validated with live OpenCode Go calls):
+  - Non-streaming return (AIMessage): `content` (str); `tool_calls` (list, each `id` / `name` / `args` / `type`, e.g. `{id: "call_...", name: "TopProducts", args: {"n": 3}}`); `response_metadata` (`model_name` / `finish_reason` (`stop` or `tool_calls`) / `id` / `token_usage{completion_tokens, prompt_tokens, total_tokens, completion_tokens_details.reasoning_tokens}`).
+  - Streaming return (AIMessageChunk): `content` carries incremental text; OpenCode Go returned the full content in one chunk for qwen3.7-max in this test; the final chunk's `response_metadata` carries `finish_reason` and `token_usage`.
+  - Tool-call round trip: `llm.bind_tools([...])` → first `AIMessage.tool_calls[0]`; put that AIMessage back into the message list and append `ToolMessage(content=<tool result>, tool_call_id=<that id>)`, then invoke again for the final answer; `finish_reason="tool_calls"` when tools are requested.
+  - NL2SQL chain (validated end-to-end): `SQLDatabase.from_uri()` → `SQLDatabaseToolkit(db, llm)` → `get_tools()` (sql_db_list_tables / sql_db_schema / sql_db_query / sql_db_query_checker) → `create_agent(model, tools, system_prompt)` → `agent.stream_events({"messages":[...]}, version="v3")`; `tool_calls` event items expose `tool_name` / `input` / `output_deltas` / `output`. A live "top 5 products by total quantity sold" run completed in 4 steps with correct SQL and answer.
+  - Verification scripts: `backend/scripts/test_qwen3.py` (connectivity / streaming / tool calling) and `backend/scripts/test_nl2sql.py` (NL2SQL correctness); the real key lives only in `backend/.env` (gitignored) and script output is auto-redacted.
 
 ## Phase 4: Frontend-Backend Integration
 
-- Match CORS and the frontend API base URL (localhost:5173 ↔ localhost:8000); with a real `DASHSCOPE_API_KEY`, run `test_qwen3` (connectivity), `test_nl2sql` (NL2SQL correctness), and `test_e2e` (full pipeline).
+- Match CORS and the frontend API base URL (localhost:5173 ↔ localhost:8000); with a real `LLM_API_KEY`, run `test_qwen3` (connectivity), `test_nl2sql` (NL2SQL correctness), and `test_e2e` (full pipeline).
 - Acceptance scenarios: ① asking "monthly sales totals" renders a chart on the right and allows switching chart types/table view; ② write statements are rejected by the prompt with an explanation; ③ switching sessions keeps history and context memory independent; ④ the frontend shows a friendly error when the model or backend is unavailable.
 - Delivery: commit and push the code; update the README quick-start instructions (backend `.env` setup, frontend startup steps).
 - Frontend API service layer:

@@ -194,15 +194,23 @@ httpx>=0.25.0
   - `error` — 错误信息
   - `done` — 完成标记
 - LLM 配置：
-  - 模型：`qwen3-max`（langchain-community 的 `ChatTongyi`）
-  - 鉴权：`DASHSCOPE_API_KEY` 写入 `backend/.env`，缺失时调用报错
+  - 供应商：默认 `openai_compatible`（OpenCode Go 订阅，OpenAI 兼容端点），经 `ChatOpenAI`（langchain-openai）接入；`tongyi`（ChatTongyi / langchain-community）作为旧方案保留
+  - 模型：`qwen3.7-max`（OpenCode Go 端点实测可用；qwen3-max 不在其模型清单，用同系列更强型号替代）
+  - 鉴权：`LLM_API_KEY` 写入 `backend/.env`（兼容 `OPENCODE_CODEX_API_KEY` / `DASHSCOPE_API_KEY`），缺失时调用报错
+  - 端点：`LLM_BASE_URL=https://opencode.ai/zen/go/v1`
   - 参数：`temperature=0.7`；Agent 工具调用使用非流式调用获取完整 `tool_calls`
   - 系统提示词：`SQL_AGENT_SYSTEM_PROMPT` 强制只读（禁止 INSERT/UPDATE/DELETE/DROP），查询结果限制 top 10
   - 记忆：滑动窗口 10 轮（20 条消息），从 `chat_messages` 重建并缓存
+- 已验证接口契约（2026-08-14，OpenCode Go 真实调用验证）：
+  - 非流式返回（AIMessage）：`content`（str）；`tool_calls`（list，每项 `id` / `name` / `args` / `type`，实测如 `{id: "call_...", name: "TopProducts", args: {"n": 3}}`）；`response_metadata`（`model_name` / `finish_reason`（`stop` 或 `tool_calls`）/ `id` / `token_usage{completion_tokens, prompt_tokens, total_tokens, completion_tokens_details.reasoning_tokens}`）。
+  - 流式返回（AIMessageChunk）：`content` 为文本增量；OpenCode Go 对 qwen3.7-max 实测一次返回完整内容（1 个 chunk）；最终 chunk 的 `response_metadata` 携带 `finish_reason` 与 `token_usage`。
+  - 工具调用回环：`llm.bind_tools([...])` → 首次 `AIMessage.tool_calls[0]`；把该 AIMessage 原样放回消息列表并追加 `ToolMessage(content=工具结果, tool_call_id=该 id)`，再次 invoke 得到最终答案；触发工具时 `finish_reason="tool_calls"`。
+  - NL2SQL 链路（实测通过）：`SQLDatabase.from_uri()` → `SQLDatabaseToolkit(db, llm)` → `get_tools()`（sql_db_list_tables / sql_db_schema / sql_db_query / sql_db_query_checker）→ `create_agent(model, tools, system_prompt)` → `agent.stream_events({"messages":[...]}, version="v3")`；`tool_calls` 事件项字段为 `tool_name` / `input` / `output_deltas` / `output`。实测"top 5 products by total quantity sold"完整走 4 步并生成正确 SQL 与答案。
+  - 验证脚本：`backend/scripts/test_qwen3.py`（连通性 / 流式 / 工具调用）、`backend/scripts/test_nl2sql.py`（NL2SQL 正确性）；真实 Key 仅存于 `backend/.env`（gitignore），脚本输出自动脱敏。
 
 ## Phase 4：前后端联调
 
-- 配置 CORS 与前端 API 地址一致（localhost:5173 ↔ localhost:8000）；使用真实 `DASHSCOPE_API_KEY` 执行 `test_qwen3`（连通性）、`test_nl2sql`（NL2SQL 正确性）、`test_e2e`（完整链路）。
+- 配置 CORS 与前端 API 地址一致（localhost:5173 ↔ localhost:8000）；使用真实 `LLM_API_KEY` 执行 `test_qwen3`（连通性）、`test_nl2sql`（NL2SQL 正确性）、`test_e2e`（完整链路）。
 - 验收场景：① 提问"按月统计销售额"→ 右侧渲染图表并可切换图表类型/表格视图；② 写操作被提示词拒绝并给出解释；③ 切换会话后历史与上下文记忆相互独立；④ 模型或后端不可用时前端显示友好错误。
 - 交付：提交并推送代码，更新 README 的快速启动说明（后端 `.env` 配置、前端启动步骤）。
 - 前端 API 服务层：

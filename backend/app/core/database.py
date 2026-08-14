@@ -24,6 +24,11 @@ def _introspection_engine() -> sa.Engine:
     return sa.create_engine(f"sqlite:///{get_db_path()}")
 
 
+def get_engine() -> sa.Engine:
+    """Public access to the cached SQLAlchemy engine (read-only queries)."""
+    return _introspection_engine()
+
+
 @lru_cache
 def get_sql_database() -> Any:
     """Cached LangChain ``SQLDatabase`` for the configured SQLite file."""

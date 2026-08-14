@@ -60,6 +60,34 @@ describe('message actions', () => {
     useAppStore.getState().updateLastMessageContent('Streamed text')
     expect(useAppStore.getState().messages[0].content).toBe('Streamed text')
   })
+
+  it('updates the last message sql_query', () => {
+    useAppStore.getState().addMessage({ role: 'assistant', content: '' })
+    useAppStore.getState().updateLastMessageSql('SELECT 1')
+    expect(useAppStore.getState().messages[0].sql_query).toBe('SELECT 1')
+  })
+
+  it('sets messages and sessions from the backend', () => {
+    useAppStore.getState().setSessions([
+      { id: 's1', title: 'A', created_at: '2026-08-14T00:00:00', updated_at: '2026-08-14T00:00:00' },
+    ])
+    expect(useAppStore.getState().sessions).toHaveLength(1)
+
+    useAppStore.getState().setMessages([{ id: 1, role: 'user', content: 'hi' }])
+    expect(useAppStore.getState().messages[0].content).toBe('hi')
+  })
+
+  it('adds a backend-created session and makes it current', () => {
+    useAppStore.getState().addSession({
+      id: 's9',
+      title: 'Backend Session',
+      created_at: '2026-08-14T00:00:00',
+      updated_at: '2026-08-14T00:00:00',
+    })
+    const state = useAppStore.getState()
+    expect(state.sessions[0].id).toBe('s9')
+    expect(state.currentSessionId).toBe('s9')
+  })
 })
 
 describe('chart actions', () => {

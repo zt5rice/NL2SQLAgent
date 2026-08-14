@@ -21,6 +21,7 @@ interface AppState {
   viewMode: ViewMode
 
   createSession: (title?: string) => Session
+  addSession: (session: Session) => void
   selectSession: (id: string) => void
   renameSession: (id: string, title: string) => void
   deleteSession: (id: string) => void
@@ -28,7 +29,10 @@ interface AppState {
 
   addMessage: (message: Omit<Message, 'id' | 'created_at'>) => void
   updateLastMessageContent: (content: string) => void
+  updateLastMessageSql: (sql: string) => void
   setStreaming: (streaming: boolean) => void
+  setMessages: (messages: Message[]) => void
+  setSessions: (sessions: Session[]) => void
   clearMessages: () => void
 
   setChartConfig: (config: ChartConfig | null) => void
@@ -58,6 +62,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentSessionId: session.id,
     }))
     return session
+  },
+
+  addSession: (session) => {
+    set((state) => ({
+      sessions: [session, ...state.sessions.filter((s) => s.id !== session.id)],
+      currentSessionId: session.id,
+    }))
   },
 
   selectSession: (id) => {
@@ -105,7 +116,20 @@ export const useAppStore = create<AppState>((set, get) => ({
     })
   },
 
+  updateLastMessageSql: (sql) => {
+    set((state) => {
+      const messages = [...state.messages]
+      const last = messages[messages.length - 1]
+      if (last) {
+        messages[messages.length - 1] = { ...last, sql_query: sql }
+      }
+      return { messages }
+    })
+  },
+
   setStreaming: (streaming) => set({ isStreaming: streaming }),
+  setMessages: (messages) => set({ messages }),
+  setSessions: (sessions) => set({ sessions }),
   clearMessages: () => set({ messages: [] }),
 
   setChartConfig: (config) => set({ chartConfig: config }),

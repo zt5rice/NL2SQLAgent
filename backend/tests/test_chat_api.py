@@ -110,8 +110,8 @@ def test_chat_persists_messages_with_sql():
     assert '"type"' in messages[1]["chart_json"]
 
 
-def test_chat_persists_executed_sql_in_answer(monkeypatch):
-    """The assistant answer's SQL block is replaced by the executed query."""
+def test_chat_persists_prose_only_answer(monkeypatch):
+    """SQL fences and tables are removed from the persisted answer."""
 
     def fake_agent_with_wrong_sql(question, history):
         yield {
@@ -138,8 +138,9 @@ def test_chat_persists_executed_sql_in_answer(monkeypatch):
             pass
         messages = client.get(f"/api/sessions/{session_id}/messages").json()
     content = messages[1]["content"]
-    assert "SELECT category FROM sales GROUP BY category" in content
-    assert "SELECT 1 FROM wrong" not in content
+    assert "```" not in content
+    assert "SELECT" not in content
+    assert messages[1]["sql_query"] == "SELECT category FROM sales GROUP BY category"
 
 
 def test_chat_strips_leading_sql_before_section_1(monkeypatch):
@@ -175,7 +176,7 @@ def test_chat_strips_leading_sql_before_section_1(monkeypatch):
         messages = client.get(f"/api/sessions/{session_id}/messages").json()
     content = messages[1]["content"]
     assert content.startswith("1. **Plan**")
-    assert "SELECT category FROM sales GROUP BY category" in content  # section 3 SQL kept
+    assert "SELECT" not in content
 
 
 def test_chat_removes_duplicate_sql_from_section_4(monkeypatch):
@@ -211,8 +212,8 @@ def test_chat_removes_duplicate_sql_from_section_4(monkeypatch):
             pass
         messages = client.get(f"/api/sessions/{session_id}/messages").json()
     content = messages[1]["content"]
-    assert content.count("SELECT category FROM sales GROUP BY category") == 1  # fence only
-    assert "Let me verify it.\nThe query is valid. Now running it." in content
+    assert "SELECT" not in content
+    assert "Let me verify it." in content
 
 
 def test_chat_unknown_session_returns_404():

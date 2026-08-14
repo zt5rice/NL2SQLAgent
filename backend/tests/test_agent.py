@@ -9,6 +9,7 @@ from app.core.markdown import (
     remove_sql_in_prose,
     replace_sql_block,
     strip_leading_sql,
+    strip_sql_and_tables,
 )
 
 
@@ -197,6 +198,27 @@ def test_remove_sql_in_prose_keeps_prose_without_sql():
     """Text without SQL statements is unchanged."""
     text = "1. **Plan** — restate the question.\n\n6. **Insights** — Electronics leads."
     assert remove_sql_in_prose(text) == text
+
+
+def test_strip_sql_and_tables_removes_fences_and_tables():
+    """Code fences and pipe tables are removed; prose is kept."""
+    text = (
+        "1. **Plan** — restate.\n\n"
+        "```sql\nSELECT 1\n```\n\n"
+        "| A | B |\n|---|---|\n| 1 | 2 |\n\n"
+        "3. **Insights** — Electronics leads."
+    )
+    cleaned = strip_sql_and_tables(text)
+    assert "```" not in cleaned
+    assert "|" not in cleaned
+    assert "1. **Plan**" in cleaned
+    assert "3. **Insights**" in cleaned
+
+
+def test_strip_sql_and_tables_keeps_prose_only_answer():
+    """Answers without fences or tables are unchanged."""
+    text = "1. **Plan** — restate.\n\n3. **Insights** — done."
+    assert strip_sql_and_tables(text) == text
 
 
 def test_execute_query_returns_structured_rows():

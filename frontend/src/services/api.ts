@@ -112,6 +112,7 @@ export function createChatSSE(request: ChatRequest) {
       let buffer = ''
       let currentEvent = ''
       const dataLines: string[] = []
+      let watchdog: ReturnType<typeof setTimeout> | null = null
 
       const flush = () => {
         if (!currentEvent || dataLines.length === 0) return
@@ -120,27 +121,43 @@ export function createChatSSE(request: ChatRequest) {
         dataLines.length = 0
       }
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+      // The backend pings every 15s, so a live stream always produces bytes.
+      // If nothing arrives for 60s, the connection is dead: abort and let the
+      // finally block finalize the stream (onDone) instead of hanging forever.
+      const armWatchdog = () => {
+        if (watchdog) clearTimeout(watchdog)
+        watchdog = setTimeout(() => controller.abort(), 60_000)
+      }
 
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
+      armWatchdog()
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          armWatchdog()
 
-        for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            flush()
-            currentEvent = line.slice(7).trim()
-          } else if (line.startsWith('data: ')) {
-            dataLines.push(line.slice(6))
-          } else if (line === '') {
-            flush()
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              flush()
+              currentEvent = line.slice(7).trim()
+            } else if (line.startsWith('data: ')) {
+              dataLines.push(line.slice(6))
+            } else if (line === '') {
+              flush()
+            }
           }
         }
+        flush()
+      } finally {
+        if (watchdog) clearTimeout(watchdog)
+        // Guaranteed finalization: fires even if the read loop throws or the
+        // watchdog aborts, so isStreaming can never stay stuck.
+        handlers.onDone?.()
       }
-      flush()
-      handlers.onDone?.()
     },
 
     abort: () => controller.abort(),

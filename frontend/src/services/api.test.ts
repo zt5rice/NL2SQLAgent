@@ -76,6 +76,31 @@ describe('createChatSSE', () => {
 
     expect(onError).toHaveBeenCalledWith('boom')
   })
+
+  it('calls onDone even when the stream errors mid-read', async () => {
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('event: text\ndata: Hello\n\n'))
+        controller.error(new Error('boom'))
+      },
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(stream, {
+            status: 200,
+            headers: { 'Content-Type': 'text/event-stream' },
+          }),
+      ),
+    )
+
+    const onDone = vi.fn()
+    await expect(
+      createChatSSE({ session_id: 's1', message: 'hi' }).start({ onDone }),
+    ).rejects.toThrow('boom')
+    expect(onDone).toHaveBeenCalled()
+  })
 })
 
 describe('sessionApi', () => {

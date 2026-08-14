@@ -4,7 +4,6 @@ export interface Session {
   title: string
   created_at: string
   updated_at: string
-  message_count: number
 }
 
 // Message type - matches backend
@@ -32,9 +31,29 @@ export interface ChartConfig {
 // Table data
 export interface TableData {
   columns: string[]
-  rows: Array<{ name: string; value: number | string }>
-  raw?: Array<Array<string | number>>
+  rows: Array<Array<string | number>>
+  raw?: string
 }
 
 // Right panel view mode
 export type ViewMode = 'chart' | 'table'
+
+// Database introspection - matches backend /api/database responses
+export interface DatabaseColumn {
+  name: string
+  type: string
+  nullable: boolean
+  default?: string | null
+  primary_key: boolean
+}
+
+export interface DatabaseTable {
+  name: string
+  columns: DatabaseColumn[]
+  sample_rows: Array<Record<string, unknown>>
+  row_count: number
+}
+
+export interface DatabaseSchema {
+  tables: DatabaseTable[]
+}

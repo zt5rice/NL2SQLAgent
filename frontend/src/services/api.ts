@@ -1,4 +1,10 @@
-import type { ChartType, Message, Session } from '../types'
+import type {
+  ChartType,
+  DatabaseSchema,
+  DatabaseTable,
+  Message,
+  Session,
+} from '../types'
 
 const API_BASE = 'http://localhost:8000/api'
 
@@ -16,18 +22,31 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     throw new Error(error.detail || 'Request failed')
   }
 
+  if (response.status === 204) {
+    return undefined as T
+  }
   return response.json() as Promise<T>
 }
 
 // Session API (backed by the FastAPI backend, available from Phase 3)
 export const sessionApi = {
-  list: () => request<Session[]>('/sessions'),
+  list: async () => {
+    const payload = await request<{ sessions: Session[] }>('/sessions')
+    return payload.sessions
+  },
   create: (title?: string) =>
     request<Session>('/sessions', { method: 'POST', body: JSON.stringify({ title }) }),
   update: (id: string, data: { title?: string }) =>
     request<Session>(`/sessions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id: string) => request<void>(`/sessions/${id}`, { method: 'DELETE' }),
   getMessages: (id: string) => request<Message[]>(`/sessions/${id}/messages`),
+}
+
+// Database introspection API (matches the backend /api/database endpoints)
+export const databaseApi = {
+  tables: () => request<{ tables: string[] }>('/database/tables'),
+  schema: () => request<DatabaseSchema>('/database/schema'),
+  table: (name: string) => request<DatabaseTable>(`/database/tables/${name}`),
 }
 
 export interface ChatRequest {
@@ -37,8 +56,8 @@ export interface ChatRequest {
 
 export interface SSEDataPayload {
   columns: string[]
-  rows: Array<{ name: string; value: number | string }>
-  raw: Array<Array<string | number>>
+  rows: Array<Array<string | number>>
+  raw: string
 }
 
 export interface SSEChartPayload {
@@ -159,5 +178,6 @@ function processEvent(event: string, data: string, handlers: SSEHandlers) {
 
 export const api = {
   session: sessionApi,
+  database: databaseApi,
   chat: createChatSSE,
 }

@@ -65,7 +65,7 @@ describe('message actions', () => {
 describe('chart actions', () => {
   it('sets chart config, table data, and view mode', () => {
     useAppStore.getState().setChartConfig({ type: 'bar', title: 'T', data: [] })
-    useAppStore.getState().setTableData({ columns: ['A'], rows: [{ name: 'a', value: 1 }] })
+    useAppStore.getState().setTableData({ columns: ['A'], rows: [['a', 1]] })
     useAppStore.getState().setViewMode('table')
     const state = useAppStore.getState()
     expect(state.chartConfig?.type).toBe('bar')

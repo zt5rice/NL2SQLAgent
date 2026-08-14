@@ -1,5 +1,11 @@
 import { create } from 'zustand'
-import type { ChartConfig, Message, Session, TableData, ViewMode } from '../types'
+import type {
+  ChartConfig,
+  Message,
+  Session,
+  TableData,
+  ViewMode,
+} from '../types'
 
 const generateId = () => Math.random().toString(36).substring(2, 15)
 
@@ -46,7 +52,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       title: title?.trim() || 'New Session',
       created_at: now(),
       updated_at: now(),
-      message_count: 0,
     }
     set((state) => ({
       sessions: [session, ...state.sessions],

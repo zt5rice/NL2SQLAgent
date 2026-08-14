@@ -24,7 +24,7 @@ const DEMO_CHART: ChartConfig = {
 
 const DEMO_TABLE: TableData = {
   columns: ['Month', 'Sales'],
-  rows: DEMO_CHART.data,
+  rows: DEMO_CHART.data.map((d) => [d.name, d.value]),
 }
 
 const PLACEHOLDER_REPLY =
@@ -71,8 +71,7 @@ export function useChat() {
             fullText += delta
             updateLastMessageContent(fullText)
           },
-          onData: (data) =>
-            setTableData({ columns: data.columns, rows: data.rows, raw: data.raw }),
+          onData: (data) => setTableData(data),
           onChart: (config) => setChartConfig(config),
           onError: () => finish(),
           onDone: () => {

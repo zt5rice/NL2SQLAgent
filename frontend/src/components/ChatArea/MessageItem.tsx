@@ -24,16 +24,6 @@ export default function MessageItem({ message }: MessageItemProps) {
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
           <div className="markdown-body">
-            {message.sql_query && (
-              <details className="mb-2 rounded-lg bg-slate-950/70 border border-slate-700/60 overflow-hidden">
-                <summary className="px-3 py-1.5 text-xs font-medium text-cyan-400 cursor-pointer select-none">
-                  View SQL
-                </summary>
-                <pre className="px-3 py-2 text-xs text-slate-300 overflow-x-auto">
-                  <code>{message.sql_query}</code>
-                </pre>
-              </details>
-            )}
             <ReactMarkdown>{message.content}</ReactMarkdown>
           </div>
         )}

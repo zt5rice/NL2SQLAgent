@@ -69,4 +69,23 @@ describe('ChartPanel', () => {
     render(<ChartPanel />)
     expect(screen.getByText('No data yet')).toBeTruthy()
   })
+
+  it('shows the SQL of the last assistant message', () => {
+    useAppStore.setState({
+      messages: [
+        { id: 1, role: 'user', content: 'hi' },
+        {
+          id: 2,
+          role: 'assistant',
+          content: 'answer',
+          sql_query: 'SELECT category, SUM(quantity) FROM sales GROUP BY category',
+        },
+      ],
+    })
+    render(<ChartPanel />)
+    expect(screen.getByText('SQL')).toBeTruthy()
+    expect(
+      screen.getByText('SELECT category, SUM(quantity) FROM sales GROUP BY category'),
+    ).toBeTruthy()
+  })
 })

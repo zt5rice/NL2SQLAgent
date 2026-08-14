@@ -6,6 +6,7 @@ from app.core import agent
 from app.core.database import get_sql_database
 from app.core.markdown import (
     MarkdownStreamNormalizer,
+    remove_sql_in_prose,
     replace_sql_block,
     strip_leading_sql,
 )
@@ -145,6 +146,29 @@ def test_strip_leading_sql_keeps_prose_preamble():
 def test_strip_leading_sql_keeps_sql_only_answer():
     """An answer with SQL but no section structure is not destroyed."""
     assert strip_leading_sql("SELECT 1") == "SELECT 1"
+
+
+def test_remove_sql_in_prose_keeps_fence_and_removes_duplicate():
+    """SQL repeated in section 4 prose is removed; the fence stays intact."""
+    text = (
+        "1. **Plan** — restate.\n\n"
+        "3. **SQL**\n\n```sql\nSELECT category FROM sales GROUP BY category\n```\n\n"
+        "4. **Execute** — Let me verify it.SELECT category, SUM(quantity * price) AS revenue\n"
+        "FROM sales\nWHERE sale_date >= '2024-01-01'\nGROUP BY category\nORDER BY revenue DESC\n"
+        "LIMIT 10The query is valid. Now running it:\n\n"
+        "5. **Results**\n\n| Category | Revenue |\n|---|---|\n| A | 1 |"
+    )
+    cleaned = remove_sql_in_prose(text)
+    assert "```sql\nSELECT category FROM sales GROUP BY category\n```" in cleaned
+    assert "SELECT category, SUM(quantity * price)" not in cleaned
+    assert "Let me verify it.\nThe query is valid. Now running it:" in cleaned
+    assert "| Category | Revenue |" in cleaned
+
+
+def test_remove_sql_in_prose_keeps_prose_without_sql():
+    """Text without SQL statements is unchanged."""
+    text = "1. **Plan** — restate the question.\n\n6. **Insights** — Electronics leads."
+    assert remove_sql_in_prose(text) == text
 
 
 def test_execute_query_returns_structured_rows():

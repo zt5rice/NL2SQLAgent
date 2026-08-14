@@ -178,6 +178,43 @@ def test_chat_strips_leading_sql_before_section_1(monkeypatch):
     assert "SELECT category FROM sales GROUP BY category" in content  # section 3 SQL kept
 
 
+def test_chat_removes_duplicate_sql_from_section_4(monkeypatch):
+    """SQL repeated in section 4 prose is removed from the persisted answer."""
+
+    def fake_agent(question, history):
+        yield {
+            "type": "tool_call",
+            "tool": "sql_db_query",
+            "input": {"query": "SELECT category FROM sales GROUP BY category"},
+            "output": "...",
+        }
+        yield {
+            "type": "result",
+            "sql": "SELECT category FROM sales GROUP BY category",
+            "data": {"columns": ["category"], "rows": [["Electronics"]], "raw": "[]"},
+            "answer": (
+                "1. **Plan** — restate.\n\n"
+                "3. **SQL**\n\n```sql\nSELECT category FROM sales GROUP BY category\n```\n\n"
+                "4. **Execute** — Let me verify it.SELECT category FROM sales GROUP BY "
+                "categoryThe query is valid. Now running it."
+            ),
+        }
+
+    monkeypatch.setattr(chat_api, "run_sql_agent", fake_agent)
+    with TestClient(app) as client:
+        session_id = _new_session(client)
+        with client.stream(
+            "POST",
+            "/api/chat",
+            json={"session_id": session_id, "message": "hi"},
+        ):
+            pass
+        messages = client.get(f"/api/sessions/{session_id}/messages").json()
+    content = messages[1]["content"]
+    assert content.count("SELECT category FROM sales GROUP BY category") == 1  # fence only
+    assert "Let me verify it.\nThe query is valid. Now running it." in content
+
+
 def test_chat_unknown_session_returns_404():
     with TestClient(app) as client:
         response = client.post(

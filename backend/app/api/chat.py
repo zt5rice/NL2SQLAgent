@@ -16,7 +16,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.core import memory
 from app.core.agent import run_sql_agent
 from app.core.chart import suggest_chart
-from app.core.markdown import replace_sql_block, strip_leading_sql
+from app.core.markdown import remove_sql_in_prose, replace_sql_block, strip_leading_sql
 from app.db import session_store
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -90,7 +90,9 @@ async def _chat_events(
             elif event["type"] == "text_delta":
                 yield _sse("text", event["content"])
             elif event["type"] == "result":
-                answer = replace_sql_block(strip_leading_sql(event["answer"]), sql)
+                answer = replace_sql_block(
+                    remove_sql_in_prose(strip_leading_sql(event["answer"])), sql
+                )
                 chart = suggest_chart(sql, event["data"])
                 session_store.add_message(
                     session_id,

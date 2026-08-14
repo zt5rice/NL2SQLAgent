@@ -11,6 +11,21 @@ _GENERIC_FENCE_RE = re.compile(r"(```[^\n]*\n)(.*?)(\n```)", re.DOTALL)
 _SQL_KEYWORD_RE = re.compile(r"\b(SELECT|WITH|INSERT|UPDATE|DELETE)\b", re.IGNORECASE)
 _SQL_START_RE = re.compile(r"^\s*\b(SELECT|WITH)\b", re.IGNORECASE)
 _SECTION_MARKER_RE = re.compile(r"^\s*(?:\d{1,2}\.\s\*\*|#+\s*\d{1,2}\.)")
+_SQL_CLAUSE_RE = re.compile(
+    r"\b(FROM|WHERE|GROUP\s+BY|ORDER\s+BY|LIMIT|JOIN|SUM|COUNT|AVG)\b", re.IGNORECASE
+)
+_SQL_CLAUSE_WORDS = (
+    r"SELECT|FROM|WHERE|GROUP|ORDER|LIMIT|HAVING|JOIN|UNION|WITH|AND|OR|AS|BY|ON|IN|NOT|NULL|DESC|ASC"
+)
+_PROSE_START = rf"[A-Z][a-z]{{2,}}\s+(?!{_SQL_CLAUSE_WORDS}\b)"
+# A SELECT statement in prose, ending at a semicolon, a section marker, a table
+# row, a normal prose sentence start, or the end of text. SQL clause keywords
+# (FROM/GROUP/ORDER/...) are excluded from the prose-stop detection.
+_SQL_STATEMENT_IN_PROSE_RE = re.compile(
+    rf"[Ss][Ee][Ll][Ee][Cc][Tt][\s\S]{{0,2500}}?"
+    rf"(?:;\s*|(?=(?:\n\s*)?(?:[A-Z][a-z]{{2,}}\s+(?!(?i:{_SQL_CLAUSE_WORDS})\b)"
+    rf"|\d{{1,2}}\.\s\*\*|#+\s|\|))|$)"
+)
 # Closing code fence glued to a section marker, e.g. "```1. **Plan**".
 _CLOSING_FENCE_GLUE_RE = re.compile(r"(```)(?=\d{1,2}\. \*\*)")
 
@@ -113,3 +128,28 @@ def strip_leading_sql(text: str) -> str:
     if section_index is None:
         return text
     return "\n".join(lines[section_index:])
+
+
+def remove_sql_in_prose(text: str) -> str:
+    """Remove SQL SELECT statements that appear outside code fences.
+
+    The model sometimes repeats the query inside prose sections (e.g. section
+    4). This drops such statements while keeping fenced SQL (section 3) intact.
+    A statement is only removed when it actually looks like SQL (contains a SQL
+    clause keyword), and the match is replaced with a newline so surrounding
+    prose stays separated.
+    """
+    parts = text.split("```")
+    cleaned: list[str] = []
+    for index, part in enumerate(parts):
+        if index % 2 == 1:  # inside a code fence: keep as-is
+            cleaned.append(part)
+            continue
+
+        def _replace(match: re.Match) -> str:
+            if _SQL_CLAUSE_RE.search(match.group(0)):
+                return "\n"
+            return match.group(0)
+
+        cleaned.append(_SQL_STATEMENT_IN_PROSE_RE.sub(_replace, part))
+    return "```".join(cleaned)

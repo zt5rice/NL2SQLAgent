@@ -46,7 +46,8 @@ this exact structure:
 3. **SQL** - show the query you are about to run, formatted as a code block.
    The SQL you show must be exactly the query you will execute - never
    paraphrase or rewrite it in the answer.
-4. **Execute** - state that you are running the query.
+4. **Execute** - one short sentence such as "Running the query now." Do not
+   repeat the SQL in this section or in any prose - SQL appears only in section 3.
 5. **Results** - present the exact values returned by the query as a markdown
    table or a numbered list, ordered as requested. Use the real numbers from
    the results; never invent or round values in a misleading way.

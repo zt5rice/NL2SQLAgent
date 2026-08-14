@@ -4,7 +4,11 @@ import pytest
 
 from app.core import agent
 from app.core.database import get_sql_database
-from app.core.markdown import MarkdownStreamNormalizer, replace_sql_block
+from app.core.markdown import (
+    MarkdownStreamNormalizer,
+    replace_sql_block,
+    strip_leading_sql,
+)
 
 
 def test_assert_read_only_rejects_writes():
@@ -117,6 +121,30 @@ def test_markdown_stream_normalizer_emits_complete_lines():
     assert normalizer.push("line one\n") == ["line one\n"]
     assert normalizer.push("line two") == []
     assert normalizer.finish() == "line two"
+
+
+def test_strip_leading_sql_removes_preamble_sql():
+    """A SQL statement before section 1 is removed."""
+    text = (
+        "SELECT category, SUM(quantity * price) AS revenue\n"
+        "FROM sales\n"
+        "ORDER BY revenue DESC;\n"
+        "1. **Plan** — restate the question."
+    )
+    stripped = strip_leading_sql(text)
+    assert stripped.startswith("1. **Plan**")
+    assert "SELECT category" not in stripped
+
+
+def test_strip_leading_sql_keeps_prose_preamble():
+    """Answers that start with prose are left untouched."""
+    text = "I will explore the tables first.\n1. **Plan** — restate."
+    assert strip_leading_sql(text) == text
+
+
+def test_strip_leading_sql_keeps_sql_only_answer():
+    """An answer with SQL but no section structure is not destroyed."""
+    assert strip_leading_sql("SELECT 1") == "SELECT 1"
 
 
 def test_execute_query_returns_structured_rows():

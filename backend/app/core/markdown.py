@@ -9,6 +9,8 @@ _NUMBERED_SECTION_RE = re.compile(r"(?<!^)(?<![\n`])(\d{1,2}\. \*\*)")
 _SQL_FENCE_RE = re.compile(r"(```sql\s*\n)(.*?)(\n```)", re.DOTALL)
 _GENERIC_FENCE_RE = re.compile(r"(```[^\n]*\n)(.*?)(\n```)", re.DOTALL)
 _SQL_KEYWORD_RE = re.compile(r"\b(SELECT|WITH|INSERT|UPDATE|DELETE)\b", re.IGNORECASE)
+_SQL_START_RE = re.compile(r"^\s*\b(SELECT|WITH)\b", re.IGNORECASE)
+_SECTION_MARKER_RE = re.compile(r"^\s*(?:\d{1,2}\.\s\*\*|#+\s*\d{1,2}\.)")
 # Closing code fence glued to a section marker, e.g. "```1. **Plan**".
 _CLOSING_FENCE_GLUE_RE = re.compile(r"(```)(?=\d{1,2}\. \*\*)")
 
@@ -86,3 +88,28 @@ def replace_sql_block(text: str, sql: str | None) -> str:
         return match.group(0)
 
     return _GENERIC_FENCE_RE.sub(_replace_if_sql, text, count=1)
+
+
+def strip_leading_sql(text: str) -> str:
+    """Remove a SQL statement that precedes the section structure.
+
+    The model occasionally starts the answer with the query itself instead of
+    section 1. If the first non-empty line is SQL (or a code fence), cut
+    everything up to the first section marker. Answers that do not start with
+    SQL, or have no section structure, are returned unchanged.
+    """
+    lines = text.splitlines()
+    first = next((i for i, line in enumerate(lines) if line.strip()), None)
+    if first is None:
+        return text
+    first_line = lines[first].strip()
+    starts_with_sql = bool(_SQL_START_RE.match(first_line) or first_line.startswith("```"))
+    if not starts_with_sql:
+        return text
+    section_index = next(
+        (i for i, line in enumerate(lines) if _SECTION_MARKER_RE.match(line)),
+        None,
+    )
+    if section_index is None:
+        return text
+    return "\n".join(lines[section_index:])

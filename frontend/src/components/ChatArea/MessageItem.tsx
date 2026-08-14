@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { Message } from '../../types'
 
 interface MessageItemProps {
@@ -24,7 +25,7 @@ export default function MessageItem({ message }: MessageItemProps) {
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
           <div className="markdown-body">
-            <ReactMarkdown>{message.content}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
           </div>
         )}
       </div>

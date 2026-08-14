@@ -43,4 +43,22 @@ describe('MessageItem', () => {
     expect(screen.getByText('⚠️ boom')).toBeTruthy()
     expect(container.querySelector('.bg-red-950\\/60')).toBeTruthy()
   })
+
+  it('renders GFM pipe tables as real table elements', () => {
+    const { container } = render(
+      <MessageItem
+        message={{
+          id: '6',
+          role: 'assistant',
+          content:
+            '| Category | Revenue |\n|---|---|\n| Electronics | 575,396.77 |\n| Books | 52,719.46 |',
+        }}
+      />,
+    )
+    const table = container.querySelector('table')
+    expect(table).toBeTruthy()
+    expect(table?.querySelectorAll('tr')).toHaveLength(3)
+    expect(screen.getByText('Electronics')).toBeTruthy()
+    expect(screen.getByText('575,396.77')).toBeTruthy()
+  })
 })

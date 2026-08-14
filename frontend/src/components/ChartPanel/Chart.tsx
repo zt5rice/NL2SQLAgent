@@ -6,7 +6,7 @@ interface ChartProps {
 }
 
 export default function Chart({ config }: ChartProps) {
-  const { type, title, data } = config
+  const { type, title, data, xField, yField } = config
 
   const baseOption = {
     backgroundColor: 'transparent',
@@ -35,11 +35,15 @@ export default function Chart({ config }: ChartProps) {
           xAxis: {
             type: 'category',
             data: names,
+            name: xField,
+            nameTextStyle: { color: '#94a3b8' },
             axisLine: { lineStyle: { color: '#475569' } },
             axisLabel: { color: '#94a3b8' },
           },
           yAxis: {
             type: 'value',
+            name: yField,
+            nameTextStyle: { color: '#94a3b8' },
             axisLine: { lineStyle: { color: '#475569' } },
             axisLabel: { color: '#94a3b8' },
             splitLine: { lineStyle: { color: '#334155' } },
@@ -58,11 +62,15 @@ export default function Chart({ config }: ChartProps) {
           xAxis: {
             type: 'category',
             data: names,
+            name: xField,
+            nameTextStyle: { color: '#94a3b8' },
             axisLine: { lineStyle: { color: '#475569' } },
             axisLabel: { color: '#94a3b8' },
           },
           yAxis: {
             type: 'value',
+            name: yField,
+            nameTextStyle: { color: '#94a3b8' },
             axisLine: { lineStyle: { color: '#475569' } },
             axisLabel: { color: '#94a3b8' },
             splitLine: { lineStyle: { color: '#334155' } },

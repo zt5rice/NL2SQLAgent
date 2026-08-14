@@ -40,6 +40,7 @@ export function useChat() {
   const setStreaming = useAppStore((s) => s.setStreaming)
   const setChartConfig = useAppStore((s) => s.setChartConfig)
   const setTableData = useAppStore((s) => s.setTableData)
+  const setViewMode = useAppStore((s) => s.setViewMode)
   const clearChartData = useAppStore((s) => s.clearChartData)
 
   const runFallback = useCallback(() => {
@@ -74,7 +75,12 @@ export function useChat() {
           },
           onSql: (sql) => updateLastMessageSql(sql),
           onData: (data) => setTableData(data),
-          onChart: (config) => setChartConfig(config),
+          onChart: (config) => {
+            setChartConfig(config)
+            // New results render as a chart by default; the user can still
+            // switch to the table view manually afterwards.
+            setViewMode('chart')
+          },
           onError: () => finish(),
           onDone: () => {
             if (!fullText) updateLastMessageContent(PLACEHOLDER_REPLY)
@@ -94,6 +100,7 @@ export function useChat() {
       setStreaming,
       setChartConfig,
       setTableData,
+      setViewMode,
       clearChartData,
       runFallback,
     ],

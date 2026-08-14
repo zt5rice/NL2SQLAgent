@@ -14,6 +14,8 @@ export interface Message {
   content: string
   sql_query?: string
   created_at?: string
+  // Frontend-only flag: renders the assistant bubble as an error state.
+  isError?: boolean
 }
 
 // Chart types

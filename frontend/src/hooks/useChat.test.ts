@@ -91,4 +91,45 @@ describe('useChat SSE binding', () => {
     expect(state.tableData?.columns).toEqual(['product_name', 'total'])
     expect(state.tableData?.rows[0]).toEqual(['Pen', 500])
   })
+
+  it('shows the backend error event as an error bubble', async () => {
+    startMock.mockImplementation(async ({ onError }: { onError: (m: string) => void }) => {
+      onError('Read-only constraint: write statements are not allowed.')
+    })
+    const { result } = renderHook(() => useChat())
+    await act(async () => {
+      result.current.sendMessage('hi')
+    })
+    const state = useAppStore.getState()
+    const last = state.messages[state.messages.length - 1]
+    expect(last.isError).toBe(true)
+    expect(last.content).toContain('Read-only constraint')
+    expect(state.isStreaming).toBe(false)
+  })
+
+  it('shows a connection error when the SSE request fails', async () => {
+    startMock.mockRejectedValue(new Error('network down'))
+    const { result } = renderHook(() => useChat())
+    await act(async () => {
+      result.current.sendMessage('hi')
+    })
+    const state = useAppStore.getState()
+    const last = state.messages[state.messages.length - 1]
+    expect(last.isError).toBe(true)
+    expect(last.content).toContain('Connection failed')
+    expect(state.isStreaming).toBe(false)
+  })
+
+  it('fills an empty done response with a neutral notice', async () => {
+    startMock.mockImplementation(async ({ onDone }: { onDone: () => void }) => {
+      onDone()
+    })
+    const { result } = renderHook(() => useChat())
+    await act(async () => {
+      result.current.sendMessage('hi')
+    })
+    const messages = useAppStore.getState().messages
+    const last = messages[messages.length - 1]
+    expect(last?.content).toBe('No response generated.')
+  })
 })

@@ -105,6 +105,20 @@ def test_normalize_markdown_closing_fence_glue():
     assert "```\n1. **Plan**" in normalized
 
 
+def test_normalize_markdown_adds_blank_line_before_table():
+    """A table glued to the section heading gets a blank line (GFM requires it)."""
+    text = "5. **Results** — Revenue by category:\n| Category | Revenue |\n|---|---|\n| A | 1 |"
+    normalized = agent.normalize_markdown(text)
+    assert "\n\n| Category | Revenue |" in normalized
+    assert "Revenue:\n| Category" not in normalized
+
+
+def test_normalize_markdown_keeps_table_rows_together():
+    """Consecutive table rows are not separated by blank lines."""
+    text = "| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |"
+    assert agent.normalize_markdown(text) == text
+
+
 def test_markdown_stream_normalizer_fixes_glue_across_events():
     """A glued section marker spanning stream events is normalized."""
     normalizer = MarkdownStreamNormalizer()

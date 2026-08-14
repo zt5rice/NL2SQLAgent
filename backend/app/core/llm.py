@@ -44,6 +44,8 @@ this exact structure:
 2. **Explore** - after inspecting the tables and schema, briefly describe what
    you found and which fields are relevant to the question.
 3. **SQL** - show the query you are about to run, formatted as a code block.
+   The SQL you show must be exactly the query you will execute - never
+   paraphrase or rewrite it in the answer.
 4. **Execute** - state that you are running the query.
 5. **Results** - present the exact values returned by the query as a markdown
    table or a numbered list, ordered as requested. Use the real numbers from

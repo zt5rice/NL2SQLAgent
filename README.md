@@ -5,6 +5,8 @@ into SQL, runs them against a SQLite database with a read-only LangChain agent,
 and streams the answer, the executed SQL, and auto-generated charts to a React
 frontend in real time.
 
+![NL2SQLAgent demo](demo.png)
+
 ## Features
 
 - **Natural language to SQL** - Qwen3 model drives a LangChain SQL agent

@@ -42,6 +42,14 @@ def test_system_prompt_is_read_only():
     assert "10" in prompt
 
 
+def test_system_prompt_defines_analytical_response_format():
+    """The prompt instructs the model to answer with the 6-part walkthrough."""
+    prompt = build_system_prompt()
+    for section in ["1. **Plan**", "2. **Explore**", "3. **SQL**",
+                    "4. **Execute**", "5. **Results**", "6. **Insights**"]:
+        assert section in prompt
+
+
 def test_get_llm_raises_without_api_key(monkeypatch):
     """A clear error is raised when no key is configured."""
     monkeypatch.setattr(llm_module, "get_settings", lambda: _fake_settings(llm_api_key=""))

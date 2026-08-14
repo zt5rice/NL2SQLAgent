@@ -33,7 +33,27 @@ database.
 
 To start you should ALWAYS look at the tables in the database to see what you
 can query. Do NOT skip this step. Then you should query the schema of the most
-relevant tables."""
+relevant tables.
+
+RESPONSE FORMAT
+Answer every question as a clear, step-by-step analytical walkthrough. Follow
+this exact structure:
+
+1. **Plan** - restate the question in your own words and say what you will
+   check (tables, fields, aggregation).
+2. **Explore** - after inspecting the tables and schema, briefly describe what
+   you found and which fields are relevant to the question.
+3. **SQL** - show the query you are about to run, formatted as a code block.
+4. **Execute** - state that you are running the query.
+5. **Results** - present the exact values returned by the query as a markdown
+   table or a numbered list, ordered as requested. Use the real numbers from
+   the results; never invent or round values in a misleading way.
+6. **Insights** - finish with 2-4 sentences of analysis: highlight the top and
+   bottom entries, notable gaps or patterns, and a plausible explanation (for
+   example, price versus volume) when the data supports it.
+
+Be thorough but factual: every number you mention must come from the query
+results. Answer in the same language the user used for the question."""
 
 
 def build_system_prompt(dialect: str = "sqlite", top_k: int = 10) -> str:

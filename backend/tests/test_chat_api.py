@@ -142,6 +142,42 @@ def test_chat_persists_executed_sql_in_answer(monkeypatch):
     assert "SELECT 1 FROM wrong" not in content
 
 
+def test_chat_strips_leading_sql_before_section_1(monkeypatch):
+    """A SQL statement placed before section 1 is removed from the answer."""
+
+    def fake_agent(question, history):
+        yield {
+            "type": "tool_call",
+            "tool": "sql_db_query",
+            "input": {"query": "SELECT category FROM sales GROUP BY category"},
+            "output": "...",
+        }
+        yield {
+            "type": "result",
+            "sql": "SELECT category FROM sales GROUP BY category",
+            "data": {"columns": ["category"], "rows": [["Electronics"]], "raw": "[]"},
+            "answer": (
+                "SELECT category FROM sales GROUP BY category\n"
+                "1. **Plan** — restate.\n\n"
+                "3. **SQL**\n\n```sql\nSELECT category FROM sales GROUP BY category\n```"
+            ),
+        }
+
+    monkeypatch.setattr(chat_api, "run_sql_agent", fake_agent)
+    with TestClient(app) as client:
+        session_id = _new_session(client)
+        with client.stream(
+            "POST",
+            "/api/chat",
+            json={"session_id": session_id, "message": "hi"},
+        ):
+            pass
+        messages = client.get(f"/api/sessions/{session_id}/messages").json()
+    content = messages[1]["content"]
+    assert content.startswith("1. **Plan**")
+    assert "SELECT category FROM sales GROUP BY category" in content  # section 3 SQL kept
+
+
 def test_chat_unknown_session_returns_404():
     with TestClient(app) as client:
         response = client.post(

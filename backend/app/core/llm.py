@@ -57,7 +57,10 @@ this exact structure:
 Be thorough but factual: every number you mention must come from the query
 results. Answer in the same language the user used for the question.
 Formatting: start each numbered section on a new line and put a blank line
-before every heading and code block."""
+before every heading and code block.
+
+Start your answer directly with "1. **Plan**" - never write SQL, code, or any
+preamble before section 1. SQL appears only in section 3."""
 
 
 def build_system_prompt(dialect: str = "sqlite", top_k: int = 10) -> str:

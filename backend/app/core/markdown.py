@@ -18,6 +18,7 @@ _SQL_CLAUSE_WORDS = (
     r"SELECT|FROM|WHERE|GROUP|ORDER|LIMIT|HAVING|JOIN|UNION|WITH|AND|OR|AS|BY|ON|IN|NOT|NULL|DESC|ASC"
 )
 _PROSE_START = rf"[A-Z][a-z]{{2,}}\s+(?!{_SQL_CLAUSE_WORDS}\b)"
+_TABLE_ROW_RE = re.compile(r"^\s*\|")
 # A SELECT statement in prose, ending at a semicolon, a section marker, a table
 # row, a normal prose sentence start, or the end of text. SQL clause keywords
 # (FROM/GROUP/ORDER/...) are excluded from the prose-stop detection.
@@ -40,7 +41,30 @@ def normalize_markdown(text: str) -> str:
     """
     text = _MARKDOWN_BLOCK_START_RE.sub(r"\n\1", text)
     text = _CLOSING_FENCE_GLUE_RE.sub(r"\1\n", text)
-    return _NUMBERED_SECTION_RE.sub(r"\n\1", text)
+    text = _NUMBERED_SECTION_RE.sub(r"\n\1", text)
+    return _ensure_table_blank_lines(text)
+
+
+def _ensure_table_blank_lines(text: str) -> str:
+    """Insert a blank line before a pipe-table block.
+
+    GFM only parses a table when it starts on a fresh line. The model sometimes
+    writes the section heading and the table on consecutive lines, which makes
+    remark-gfm render the rows as raw text. This inserts the missing blank line
+    before the first row of a table that follows prose or a list item.
+    """
+    lines = text.split("\n")
+    out: list[str] = []
+    for line in lines:
+        if (
+            out
+            and _TABLE_ROW_RE.match(line)
+            and out[-1].strip()
+            and not _TABLE_ROW_RE.match(out[-1])
+        ):
+            out.append("")
+        out.append(line)
+    return "\n".join(out)
 
 
 class MarkdownStreamNormalizer:

@@ -21,6 +21,7 @@ interface AppState {
   autoTitleFromMessage: (id: string, content: string) => void
 
   addMessage: (message: Omit<Message, 'id' | 'created_at'>) => void
+  updateLastMessageContent: (content: string) => void
   setStreaming: (streaming: boolean) => void
   clearMessages: () => void
 
@@ -86,6 +87,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({
       messages: [...state.messages, { ...message, id: generateId(), created_at: now() }],
     }))
+  },
+
+  updateLastMessageContent: (content) => {
+    set((state) => {
+      const messages = [...state.messages]
+      const last = messages[messages.length - 1]
+      if (last) {
+        messages[messages.length - 1] = { ...last, content }
+      }
+      return { messages }
+    })
   },
 
   setStreaming: (streaming) => set({ isStreaming: streaming }),

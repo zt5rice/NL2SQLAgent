@@ -135,14 +135,32 @@ def test_normalize_markdown_adds_blank_line_before_sections():
 
 
 def test_markdown_stream_normalizer_fixes_glue_across_events():
-    """A glued section marker spanning stream events is normalized."""
+    """A glued section marker spanning events is normalized; leading SQL is held."""
     normalizer = MarkdownStreamNormalizer()
     chunks = normalizer.push("SELECT ... ORDER BY total_quantity DESC")
     chunks += normalizer.push(";1. **Plan** — restate the question.")
     tail = normalizer.finish()
     joined = "".join(chunks + [tail])
-    assert "DESC;\n\n1. **Plan**" in joined
-    assert "DESC;1. **Plan" not in joined
+    assert joined.startswith("1. **Plan**")
+    assert "SELECT" not in joined
+
+
+def test_stream_holds_leading_sql_until_bold_section_marker():
+    """A leading SQL preamble never streams; emission starts at **Plan**."""
+    normalizer = MarkdownStreamNormalizer()
+    assert normalizer.push("SELECT category, SUM(quantity * price) AS revenue\nFROM sales") == []
+    chunks = normalizer.push("\n\n**Plan**\nRestate the question.")
+    tail = normalizer.finish()
+    joined = "".join(chunks + [tail])
+    assert joined.startswith("**Plan**")
+    assert "SELECT" not in joined
+
+
+def test_stream_emits_prose_preamble_immediately():
+    """Answers that start with prose are not held back."""
+    normalizer = MarkdownStreamNormalizer()
+    assert normalizer.push("I will explore the tables.\n") == ["I will explore the tables.\n"]
+    assert normalizer.finish() == ""
 
 
 def test_markdown_stream_normalizer_emits_complete_lines():

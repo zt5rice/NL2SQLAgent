@@ -12,7 +12,7 @@ _SQL_KEYWORD_RE = re.compile(r"\b(SELECT|WITH|INSERT|UPDATE|DELETE)\b", re.IGNOR
 _SQL_START_RE = re.compile(r"^\s*\b(SELECT|WITH)\b", re.IGNORECASE)
 # Section markers in any format: "1. Plan", "1. **Plan**", "**1. Plan**", "## 1.".
 _SECTION_MARKER_RE = re.compile(
-    r"^\s*(?:\d{1,2}\.\s(?:\*\*)?[A-Z]|\*\*\d{1,2}\.\s[A-Z]|#+\s*\d{1,2}\.)"
+    r"^\s*(?:\d{1,2}\.\s(?:\*\*)?[A-Z]|\*\*\d{1,2}\.\s[A-Z]|#+\s*\d{1,2}\.|\*\*[A-Z][a-z]{2,}\*\*)"
 )
 _GLUED_BOLD_SECTION_RE = re.compile(r"(?<!^)(?<![\n])(\*\*\d{1,2}\. [A-Z])")
 _SQL_CLAUSE_RE = re.compile(
@@ -85,6 +85,22 @@ def _ensure_table_blank_lines(text: str) -> str:
     return "\n".join(out)
 
 
+def _starts_with_sql(text: str) -> bool:
+    """True when the first non-empty line looks like a SQL statement/fence."""
+    first = next((line.strip() for line in text.split("\n") if line.strip()), "")
+    return bool(_SQL_START_RE.match(first) or first.startswith("```"))
+
+
+def _first_section_marker_offset(text: str) -> int | None:
+    """Offset of the first section-marker line, or None when absent."""
+    offset = 0
+    for line in text.split("\n"):
+        if _SECTION_MARKER_RE.match(line):
+            return offset
+        offset += len(line) + 1
+    return None
+
+
 class MarkdownStreamNormalizer:
     """Accumulates raw streamed text and emits line-complete chunks of the
     markdown-normalized full text.
@@ -99,11 +115,33 @@ class MarkdownStreamNormalizer:
     def __init__(self) -> None:
         self._raw_parts: list[str] = []
         self._emitted = 0
+        self._started = False
 
     def push(self, text: str) -> list[str]:
         """Append raw streamed text; return newly completed lines to emit."""
         self._raw_parts.append(text)
         normalized = normalize_markdown("".join(self._raw_parts))
+        self._ensure_start(normalized)
+        if not self._started:
+            return []  # still holding a leading SQL preamble
+        return self._emit_complete_lines(normalized)
+
+    def _ensure_start(self, normalized: str) -> None:
+        """Decide where emission starts so the streamed text matches the
+        persisted (post-processed) answer: a leading SQL preamble is held back
+        until the first section marker appears, then dropped entirely."""
+        if self._started:
+            return
+        if _starts_with_sql(normalized):
+            marker = _first_section_marker_offset(normalized)
+            if marker is None:
+                return  # keep holding; no section marker yet
+            self._emitted = marker
+        else:
+            self._emitted = 0
+        self._started = True
+
+    def _emit_complete_lines(self, normalized: str) -> list[str]:
         chunks: list[str] = []
         while True:
             index = normalized.find("\n", self._emitted)
@@ -117,6 +155,7 @@ class MarkdownStreamNormalizer:
     def finish(self) -> str:
         """Return the remaining (possibly partial) normalized tail."""
         normalized = normalize_markdown("".join(self._raw_parts))
+        self._ensure_start(normalized)
         tail = normalized[self._emitted :]
         self._emitted = len(normalized)
         return tail

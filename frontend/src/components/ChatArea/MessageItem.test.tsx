@@ -78,4 +78,20 @@ describe('MessageItem', () => {
     expect(container.querySelector('table')).toBeNull()
     expect(screen.getByText('## 1. Plan', { exact: false })).toBeTruthy()
   })
+
+  it('renders numbered sections as an ordered list with visible markers', () => {
+    const { container } = render(
+      <MessageItem
+        message={{
+          id: '8',
+          role: 'assistant',
+          content: '1. **Plan** — restate the question.\n\n2. **Explore** — inspect the schema.',
+        }}
+      />,
+    )
+    const list = container.querySelector('ol')
+    expect(list).toBeTruthy()
+    expect(list?.querySelectorAll('li')).toHaveLength(2)
+    expect(screen.getByText('Plan', { exact: false })).toBeTruthy()
+  })
 })

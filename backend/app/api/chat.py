@@ -90,14 +90,19 @@ async def _chat_events(
                 yield _sse("text", event["content"])
             elif event["type"] == "result":
                 answer = event["answer"]
+                chart = suggest_chart(sql, event["data"])
                 session_store.add_message(
-                    session_id, "assistant", answer, sql_query=sql
+                    session_id,
+                    "assistant",
+                    answer,
+                    sql_query=sql,
+                    data_json=json.dumps(event["data"], ensure_ascii=False),
+                    chart_json=json.dumps(chart.model_dump_for_sse(), ensure_ascii=False),
                 )
                 memory.invalidate(session_id)
                 if sql:
                     yield _sse("sql", sql)
                 yield _sse("data", json.dumps(event["data"], ensure_ascii=False))
-                chart = suggest_chart(sql, event["data"])
                 yield _sse(
                     "chart",
                     json.dumps(chart.model_dump_for_sse(), ensure_ascii=False),

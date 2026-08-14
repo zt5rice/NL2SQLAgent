@@ -38,6 +38,8 @@ class MessageOut(BaseModel):
     role: str
     content: str
     sql_query: str | None = None
+    data_json: str | None = None
+    chart_json: str | None = None
     created_at: datetime
 
 

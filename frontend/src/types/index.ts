@@ -13,6 +13,8 @@ export interface Message {
   role: 'user' | 'assistant' | 'system'
   content: string
   sql_query?: string
+  data_json?: string
+  chart_json?: string
   created_at?: string
   // Frontend-only flag: renders the assistant bubble as an error state.
   isError?: boolean

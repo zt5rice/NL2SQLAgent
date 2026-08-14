@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react'
 import { api } from '../services/api'
 import { useAppStore } from '../store/useAppStore'
+import type { Message } from '../types'
 
 /**
  * Session operations backed by the backend REST API.
@@ -18,8 +19,31 @@ export function useSession() {
   const setMessages = useAppStore((s) => s.setMessages)
   const clearMessages = useAppStore((s) => s.clearMessages)
   const clearChartData = useAppStore((s) => s.clearChartData)
+  const setChartConfig = useAppStore((s) => s.setChartConfig)
+  const setTableData = useAppStore((s) => s.setTableData)
+  const setViewMode = useAppStore((s) => s.setViewMode)
   const renameSession = useAppStore((s) => s.renameSession)
   const deleteSession = useAppStore((s) => s.deleteSession)
+
+  const restoreVisualsFromMessages = useCallback(
+    (messages: Message[]) => {
+      const lastAssistant = [...messages]
+        .reverse()
+        .find((m) => m.role === 'assistant')
+      if (lastAssistant?.data_json && lastAssistant?.chart_json) {
+        try {
+          setChartConfig(JSON.parse(lastAssistant.chart_json))
+          setTableData(JSON.parse(lastAssistant.data_json))
+          setViewMode('chart')
+          return
+        } catch {
+          // Malformed persisted payloads are ignored below.
+        }
+      }
+      clearChartData()
+    },
+    [setChartConfig, setTableData, setViewMode, clearChartData],
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -34,7 +58,9 @@ export function useSession() {
           api.session
             .getMessages(first.id)
             .then((messages) => {
-              if (!cancelled) setMessages(messages)
+              if (cancelled) return
+              setMessages(messages)
+              restoreVisualsFromMessages(messages)
             })
             .catch(() => {})
         }
@@ -43,7 +69,7 @@ export function useSession() {
     return () => {
       cancelled = true
     }
-  }, [setSessions, selectSession, setMessages])
+  }, [setSessions, selectSession, setMessages, restoreVisualsFromMessages])
 
   const handleCreate = useCallback(
     async (title?: string) => {
@@ -68,10 +94,13 @@ export function useSession() {
       clearChartData()
       api.session
         .getMessages(id)
-        .then(setMessages)
+        .then((messages) => {
+          setMessages(messages)
+          restoreVisualsFromMessages(messages)
+        })
         .catch(() => setMessages([]))
     },
-    [selectSession, clearMessages, clearChartData, setMessages],
+    [selectSession, clearMessages, clearChartData, setMessages, restoreVisualsFromMessages],
   )
 
   const handleRename = useCallback(

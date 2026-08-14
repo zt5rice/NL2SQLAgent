@@ -10,6 +10,29 @@ const session = {
   updated_at: '2026-08-14T00:00:00',
 }
 
+const persistedMessages = [
+  {
+    id: 1,
+    session_id: 's1',
+    role: 'user',
+    content: 'hi',
+    sql_query: null,
+    data_json: null,
+    chart_json: null,
+    created_at: '2026-08-14T00:00:00',
+  },
+  {
+    id: 2,
+    session_id: 's1',
+    role: 'assistant',
+    content: 'answer',
+    sql_query: 'SELECT 1',
+    data_json: JSON.stringify({ columns: ['a'], rows: [['x', 1]], raw: '[]' }),
+    chart_json: JSON.stringify({ type: 'bar', title: 'T', data: [{ name: 'x', value: 1 }] }),
+    created_at: '2026-08-14T00:00:00',
+  },
+]
+
 vi.mock('../services/api', () => ({
   api: {
     session: {
@@ -17,9 +40,7 @@ vi.mock('../services/api', () => ({
       create: vi.fn(async () => session),
       update: vi.fn(async () => session),
       delete: vi.fn(async () => undefined),
-      getMessages: vi.fn(async () => [
-        { id: 1, session_id: 's1', role: 'user', content: 'hi', sql_query: null, created_at: '2026-08-14T00:00:00' },
-      ]),
+      getMessages: vi.fn(async () => persistedMessages),
     },
     database: {},
     chat: {},
@@ -59,9 +80,13 @@ describe('useSession', () => {
     })
     expect(useAppStore.getState().currentSessionId).toBe('s1')
     await waitFor(() => {
-      expect(useAppStore.getState().messages).toHaveLength(1)
+      expect(useAppStore.getState().messages).toHaveLength(2)
     })
     expect(mockedSessionApi.getMessages).toHaveBeenCalledWith('s1')
+    // Chart/table data is restored from the last assistant message.
+    expect(useAppStore.getState().chartConfig?.type).toBe('bar')
+    expect(useAppStore.getState().tableData?.columns).toEqual(['a'])
+    expect(useAppStore.getState().viewMode).toBe('chart')
   })
 
   it('creates a session through the backend', async () => {
@@ -83,6 +108,7 @@ describe('useSession', () => {
     await waitFor(() => {
       expect(useAppStore.getState().messages[0].content).toBe('hi')
     })
+    expect(useAppStore.getState().chartConfig?.type).toBe('bar')
   })
 
   it('renames a session locally and on the backend', async () => {

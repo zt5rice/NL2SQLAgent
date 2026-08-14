@@ -95,6 +95,7 @@ def run_sql_agent(
         if kind == "messages":
             for token in item.text:
                 text_parts.append(token)
+                yield {"type": "text_delta", "content": token}
         elif kind == "tool_calls":
             if item.tool_name == SQL_QUERY_TOOL and isinstance(item.input, dict):
                 last_sql = item.input.get("query")

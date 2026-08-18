@@ -3,6 +3,7 @@
 import os
 import random
 import sqlite3
+from typing import Iterator
 
 from app.config import get_settings
 
@@ -75,9 +76,18 @@ _SALES_PRODUCTS: list[tuple[str, str, float, int]] = [
 ]
 
 _SALES_REGIONS = ["East", "West", "North", "South"]
-_SALES_MONTHS = [(year, month) for year in (2023, 2024) for month in range(1, 13)]
+_SALES_DAYS = [
+    f"{year}-{month:02d}-{day:02d}"
+    for year in (2023, 2024)
+    for month in range(1, 13)
+    for day in range(1, 31)
+]
+# Line items per product per day. 51 products x 720 days x 28 = 1,028,160 rows.
+_RECORDS_PER_PRODUCT_DAY = 28
 
-EXPECTED_SALES_ROWS = len(_SALES_PRODUCTS) * len(_SALES_MONTHS)
+EXPECTED_SALES_ROWS = (
+    len(_SALES_PRODUCTS) * len(_SALES_DAYS) * _RECORDS_PER_PRODUCT_DAY
+)
 
 # (name, department, position, salary, hire_date)
 _EMPLOYEES: list[tuple[str, str, str, float, str]] = [
@@ -115,17 +125,30 @@ def _seasonal_factor(category: str, month: int) -> float:
     return 1.0
 
 
-def build_sales_seed() -> list[tuple]:
-    """Deterministic sales rows: one record per product per month (2023-01..2024-12)."""
+def build_sales_seed() -> Iterator[tuple]:
+    """Deterministic ~1M-row sales generator: line items per product per day.
+
+    Yields (product_name, category, quantity, price, sale_date, region) for the
+    2023-01-01..2024-12-31 window. A generator (rather than a materialized list)
+    keeps memory bounded at ~1M rows.
+    """
     rng = random.Random(20240814)
-    rows: list[tuple] = []
-    for year, month in _SALES_MONTHS:
+    for day in _SALES_DAYS:
         for name, category, price, base_qty in _SALES_PRODUCTS:
-            quantity = max(1, int(base_qty * _seasonal_factor(category, month) * rng.uniform(0.7, 1.3)))
-            unit_price = round(price * rng.uniform(0.95, 1.05), 2)
-            region = _SALES_REGIONS[rng.randrange(len(_SALES_REGIONS))]
-            rows.append((name, category, quantity, unit_price, f"{year}-{month:02d}-01", region))
-    return rows
+            season = _seasonal_factor(category, int(day[5:7]))
+            for _ in range(_RECORDS_PER_PRODUCT_DAY):
+                quantity = max(
+                    1,
+                    int(
+                        base_qty
+                        * season
+                        * rng.uniform(0.7, 1.3)
+                        / _RECORDS_PER_PRODUCT_DAY
+                    ),
+                )
+                unit_price = round(price * rng.uniform(0.95, 1.05), 2)
+                region = _SALES_REGIONS[rng.randrange(len(_SALES_REGIONS))]
+                yield (name, category, quantity, unit_price, day, region)
 
 
 def get_db_path() -> str:
@@ -224,6 +247,16 @@ def init_sample_database() -> None:
             "INSERT INTO sales (product_name, category, quantity, price, sale_date, region) VALUES (?, ?, ?, ?, ?, ?)",
             build_sales_seed(),
         )
+    # Indexes keep million-row aggregations / range queries fast.
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sales_sale_date ON sales(sale_date)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sales_category ON sales(category)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sales_product_name ON sales(product_name)"
+    )
 
     # Seed data: employees (only when the table is empty)
     cursor.execute("SELECT COUNT(*) FROM employees")

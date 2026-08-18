@@ -1,6 +1,7 @@
 """Database initialization smoke tests."""
 
 import sqlite3
+from itertools import islice
 
 from fastapi.testclient import TestClient
 
@@ -53,13 +54,21 @@ def test_init_is_idempotent():
 
 
 def test_sales_seed_is_deterministic_and_rich():
-    """The generated seed is stable and covers the full product/month grid."""
-    first = build_sales_seed()
-    assert first == build_sales_seed()
-    assert len(first) == EXPECTED_SALES_ROWS
-    months = {row[4] for row in first}
+    """The generated seed is stable, ~1M rows, and covers all months/regions."""
+    sample = list(islice(build_sales_seed(), 2000))
+    assert len(sample) == 2000
+    assert sample == list(islice(build_sales_seed(), 2000))
+
+    total = 0
+    months: set[str] = set()
+    regions: set[str] = set()
+    for row in build_sales_seed():
+        total += 1
+        months.add(row[4][:7])
+        regions.add(row[5])
+    assert total == EXPECTED_SALES_ROWS
+    assert EXPECTED_SALES_ROWS > 1_000_000
     assert len(months) == 24
-    regions = {row[5] for row in first}
     assert regions == {"East", "West", "North", "South"}
 
 

@@ -82,7 +82,9 @@ npm run dev
 ```
 
 Open <http://localhost:5173>. The first start seeds the sample SQLite database
-(`sales` and `employees` tables) automatically.
+(`sales` and `employees` tables) automatically - a deterministic ~1.03M-row
+warehouse (51 products x 8 categories x 24 months at line-item granularity)
+with indexes on date/category/product for fast aggregation.
 
 ## Usage
 
@@ -112,6 +114,22 @@ cd backend
 ./.venv/bin/python scripts/test_nl2sql.py  # NL2SQL agent correctness
 ./.venv/bin/python scripts/test_e2e.py     # full /api/chat pipeline
 ```
+
+## Performance
+
+Measured on the seeded `sales` table (1,028,160 rows, 132 MB SQLite file, local
+MacBook, no caching):
+
+| Query | Latency |
+| --- | ---: |
+| Revenue by category (GROUP BY) | 78 ms |
+| Top products by total quantity (GROUP BY + ORDER BY + LIMIT) | 93 ms |
+| Monthly sales trend 2024 (date-range filter + GROUP BY) | 151 ms |
+| Revenue by region (GROUP BY) | 235 ms |
+| Indexed date-range count | <1 ms |
+
+The end-to-end bottleneck is LLM latency (~7-15s with `deepseek-v4-flash`), not
+the database.
 
 ## LLM provider configuration
 

@@ -7,19 +7,19 @@ benchmarks. Keep every number tied to a script or measured run before publishing
 
 ```
 Enterprise NL2SQL Data Analytics Agent | 2026
-- Built an LLM-powered NL2SQL agent (FastAPI + LangChain) that turns natural
-  language questions into read-only SQL with a defense-in-depth guard,
-  streaming results and auto-generated ECharts to a React dashboard over SSE.
+- Built an LLM-powered NL2SQL agent (FastAPI + LangChain) that turns natural-
+  language questions into read-only SQL behind a defense-in-depth guard,
+  streaming answers and auto-generated ECharts to a React dashboard over SSE.
 - Engineered a provider-agnostic LLM layer (OpenCode Go / deepseek-v4-flash)
-  and a deterministic ~1.03M-row sample warehouse with indexed aggregation,
-  keeping GROUP BY / JOIN queries under 250 ms and cutting end-to-end query
-  latency from ~25s to ~7s by switching models.
-- Designed a production-grade chat pipeline: sliding-window session memory,
-  SSE event streaming (thinking/text/sql/data/chart/done), persisted chart
-  payloads, and markdown normalization that keeps live and stored answers
-  byte-identical.
+  and a deterministic ~1.03M-row indexed sample warehouse, keeping GROUP BY /
+  JOIN queries under 250 ms and cutting end-to-end query latency from ~25s to
+  ~7s by switching models.
+- Designed a production-grade chat pipeline with sliding-window session
+  memory, SSE event streaming (thinking/text/sql/data/chart/done), persisted
+  chart payloads, and markdown normalization that keeps live and stored
+  answers byte-identical.
 - Shipped with 81 backend + 51 frontend tests and real-key end-to-end
-  verification scripts; enforced one-PR-per-ticket workflow across 50+
+  verification scripts, enforcing a one-PR-per-ticket workflow across 50+
   tracked issues.
 ```
 
